@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SudentAr — Iniciar sesión</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Nunito:wght@700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    background: #F4F3F8;
+  }
+
+  /* LADO IZQUIERDO — branding */
+  .left {
+    width: 45%;
+    background: linear-gradient(160deg, #3BBFBF 0%, #7B52CC 50%, #3B2D8F 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .left::before {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    top: -100px; right: -100px;
+  }
+  .left::after {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    bottom: -80px; left: -60px;
+  }
+
+  .brand-logo {
+    font-family: 'Nunito', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+    position: relative; z-index: 1;
+  }
+
+  .brand-tagline {
+    color: rgba(255,255,255,0.75);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 300px;
+    position: relative; z-index: 1;
+    margin-bottom: 48px;
+  }
+
+  .brand-features {
+    position: relative; z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .brand-feat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255,255,255,0.85);
+    font-size: 14px;
+  }
+
+  .brand-feat-icon {
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* LADO DERECHO — formulario */
+  .right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .login-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: #1A1730;
+    margin-bottom: 6px;
+  }
+
+  .login-sub {
+    color: #7A748F;
+    font-size: 14px;
+    margin-bottom: 36px;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #7A748F;
+    margin-bottom: 6px;
+  }
+
+  input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #DDD9ED;
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #1A1730;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input:focus {
+    border-color: #7B52CC;
+    box-shadow: 0 0 0 3px rgba(123,82,204,0.12);
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #3BBFBF, #7B52CC);
+    color: #fff;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-login:hover { opacity: 0.92; }
+  .btn-login:active { transform: scale(0.99); }
+  .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .error-box {
+    background: #FAEAEA;
+    border: 1px solid #F5CCCC;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #B94040;
+    font-size: 13px;
+    margin-top: 14px;
+    display: none;
+  }
+
+  .forgot-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #7A748F;
+  }
+
+  .forgot-link a {
+    color: #7B52CC;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .divider {
+    height: 1px;
+    background: #EDE9FA;
+    margin: 28px 0;
+  }
+
+  .admin-link {
+    text-align: center;
+    font-size: 12px;
+    color: #7A748F;
+  }
+
+  .admin-link a {
+    color: #3B2D8F;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  /* RESET PASSWORD VIEW */
+  #reset-view { display: none; }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .left { display: none; }
+    .right { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LADO IZQUIERDO -->
+<div class="left">
+  <div class="brand-logo">SudentAr</div>
+  <div class="brand-tagline">Gestión inteligente para tu clínica dental. Seguro, en la nube, siempre disponible.</div>
+  <div class="brand-features">
+    <div class="brand-feat"><div class="brand-feat-icon">📅</div>Agenda y citas sin conflictos</div>
+    <div class="brand-feat"><div class="brand-feat-icon">🦷</div>Expediente clínico completo</div>
+    <div class="brand-feat"><div class="brand-feat-icon">💰</div>Control de pagos y saldos</div>
+    <div class="brand-feat"><div class="brand-feat-icon">🔒</div>Tus datos, solo tuyos</div>
+    <div class="brand-feat"><div class="brand-feat-icon">📱</div>Desde cualquier dispositivo</div>
+  </div>
+</div>
+
+<!-- LADO DERECHO — LOGIN -->
+<div class="right">
+  <div class="login-card">
+
+    <!-- Vista: Login -->
+    <div id="login-view">
+      <div class="login-title">Bienvenido</div>
+      <div class="login-sub">Ingresa con tu cuenta de SudentAr</div>
+
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input type="email" id="email" placeholder="doctor@tuclinica.mx" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+
+      <button class="btn-login" id="btn-login" onclick="doLogin()">
+        Iniciar sesión
+      </button>
+
+      <div class="error-box" id="error-box"></div>
+
+      <div class="forgot-link">
+        <a href="#" onclick="showReset(); return false;">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="admin-link">
+        ¿Administrador de SudentAr? <a href="/admin.html">Acceso admin →</a>
+      </div>
+    </div>
+
+    <!-- Vista: Recuperar contraseña -->
+    <div id="reset-view">
+      <div class="login-title">Recuperar acceso</div>
+      <div class="login-sub">Te enviaremos un enlace para restablecer tu contraseña</div>
+
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input type="email" id="reset-email" placeholder="doctor@tuclinica.mx">
+      </div>
+
+      <button class="btn-login" id="btn-reset" onclick="doReset()">
+        Enviar enlace de recuperación
+      </button>
+
+      <div class="error-box" id="reset-error-box"></div>
+
+      <div class="forgot-link" style="margin-top:16px">
+        <a href="#" onclick="showLogin(); return false;">← Volver al login</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIGURACIÓN — reemplaza con tus credenciales
+// ══════════════════════════════════════════════
+const SUPABASE_URL  = 'https://TU_PROJECT_REF.supabase.co';
+const SUPABASE_ANON = 'TU_ANON_KEY';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── Si ya hay sesión activa, redirigir directo al sistema
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    window.location.href = '/index.html';
+  }
+}
+checkSession();
+
+// ── LOGIN ────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const pass  = document.getElementById('password').value;
+  const btn   = document.getElementById('btn-login');
+  const errEl = document.getElementById('error-box');
+
+  errEl.style.display = 'none';
+
+  if (!email) { showError('Ingresa tu correo electrónico'); return; }
+  if (!pass)  { showError('Ingresa tu contraseña'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Verificando...';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+  if (error) {
+    btn.disabled = false;
+    btn.innerHTML = 'Iniciar sesión';
+    if (error.message.includes('Invalid login')) {
+      showError('Correo o contraseña incorrectos. Verifica tus datos e intenta de nuevo.');
+    } else if (error.message.includes('Email not confirmed')) {
+      showError('Debes confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.');
+    } else {
+      showError('Error al iniciar sesión: ' + error.message);
+    }
+    return;
+  }
+
+  // Login exitoso — redirigir al sistema
+  btn.innerHTML = '✓ Acceso concedido';
+  setTimeout(() => { window.location.href = '/index.html'; }, 300);
+}
+
+// ── RECUPERAR CONTRASEÑA ─────────────────────
+async function doReset() {
+  const email = document.getElementById('reset-email').value.trim();
+  const btn   = document.getElementById('btn-reset');
+  const errEl = document.getElementById('reset-error-box');
+
+  errEl.style.display = 'none';
+  if (!email) { showResetError('Ingresa tu correo electrónico'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Enviando...';
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/reset-password.html'
+  });
+
+  btn.disabled = false;
+
+  if (error) {
+    btn.innerHTML = 'Enviar enlace de recuperación';
+    showResetError('Error: ' + error.message);
+    return;
+  }
+
+  btn.innerHTML = '✓ Enlace enviado';
+  errEl.style.display = 'block';
+  errEl.style.background = '#EAF5EE';
+  errEl.style.borderColor = '#B3DFC0';
+  errEl.style.color = '#2D7A4F';
+  errEl.textContent = 'Revisa tu correo. El enlace es válido por 60 minutos.';
+}
+
+// ── UI HELPERS ───────────────────────────────
+function showError(msg) {
+  const el = document.getElementById('error-box');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function showResetError(msg) {
+  const el = document.getElementById('reset-error-box');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function showReset() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('reset-view').style.display = 'block';
+  document.getElementById('reset-email').focus();
+}
+
+function showLogin() {
+  document.getElementById('reset-view').style.display = 'none';
+  document.getElementById('login-view').style.display = 'block';
+  document.getElementById('email').focus();
+}
+</script>
+</body>
+</html>
