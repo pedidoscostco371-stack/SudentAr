@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SudentAr — Panel de Administración</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Nunito:wght@700;800&display=swap');
+  :root {
+    --bg: #F4F3F8; --surface: #fff; --border: #DDD9ED;
+    --purple: #3B2D8F; --teal: #3BBFBF; --accent: #7B52CC;
+    --text: #1A1730; --muted: #7A748F;
+    --green: #2D7A4F; --green-bg: #EAF5EE;
+    --red: #B94040; --red-bg: #FAEAEA;
+    --shadow: 0 2px 8px rgba(59,45,143,.1);
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* LOGIN */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card {
+    background: var(--surface); border-radius: 16px; padding: 40px 36px;
+    box-shadow: var(--shadow); width: 100%; max-width: 400px;
+  }
+  .login-logo { font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 6px;
+    background: linear-gradient(135deg, #3BBFBF, #7B52CC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .login-sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+  /* ADMIN LAYOUT */
+  .admin-wrap { display: flex; min-height: 100vh; }
+  .admin-nav {
+    width: 220px; background: linear-gradient(160deg, #3BBFBF 0%, #7B52CC 45%, #3B2D8F 100%);
+    padding: 24px 0; position: fixed; top:0; left:0; bottom:0;
+    display: flex; flex-direction: column;
+  }
+  .nav-logo { padding: 0 20px 24px; border-bottom: 1px solid rgba(255,255,255,.15); margin-bottom: 16px; }
+  .nav-logo-text { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 800; color: #fff; }
+  .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.4); padding: 0 20px 6px; margin-top: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: rgba(255,255,255,.75);
+    cursor: pointer; font-size: 13.5px; font-weight: 500; transition: all .15s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: rgba(255,255,255,.12); color: #fff; }
+  .nav-item.active { background: rgba(255,255,255,.2); color: #fff; }
+  .nav-spacer { flex: 1; }
+  .nav-user { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.15); }
+  .nav-user-name { color: rgba(255,255,255,.9); font-size: 13px; font-weight: 500; }
+  .nav-user-role { color: rgba(255,255,255,.5); font-size: 11px; }
+
+  .admin-main { margin-left: 220px; flex: 1; padding: 32px; }
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 800; }
+  .page-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  /* CARDS STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .stat-val { font-size: 28px; font-weight: 700; font-family: 'Nunito', sans-serif; }
+  .stat-lbl { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .stat-accent { color: var(--accent); }
+  .stat-green { color: var(--green); }
+
+  /* TABLE */
+  .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+    border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-weight: 600; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); font-weight: 600; padding: 10px 16px; text-align: left;
+    background: #FAF9FD; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFAFE; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-red   { background: var(--red-bg);   color: var(--red); }
+  .badge-purple { background: #EDE9FA; color: var(--accent); }
+  .badge-teal  { background: #E5F7F7; color: #1A7A7A; }
+  .badge-gray  { background: #F0EEF8; color: var(--muted); }
+
+  /* FORMS */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+  input, select, textarea {
+    width: 100%; padding: 9px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-family: inherit; font-size: 14px; color: var(--text);
+    background: var(--surface); outline: none; transition: border-color .15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: 8px; font-family: inherit; font-size: 13.5px;
+    font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--purple); }
+  .btn-danger { background: var(--red-bg); color: var(--red); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* MODAL */
+  .modal-backdrop { display: none; position: fixed; inset: 0;
+    background: rgba(30,20,60,.45); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 16px; padding: 28px; width: 560px;
+    max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .modal-title { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 800; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: var(--purple); color: #fff; padding: 12px 20px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 500; opacity: 0; transition: opacity .3s;
+    box-shadow: 0 4px 20px rgba(59,45,143,.3); max-width: 320px; }
+  #toast.show { opacity: 1; }
+
+  /* VIEW TOGGLE */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* EMPTY */
+  .empty { padding: 48px; text-align: center; color: var(--muted); }
+  .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* PLAN BADGES */
+  .plan-basico { background: #E5F7F7; color: #1A7A7A; }
+  .plan-pro { background: #EDE9FA; color: var(--accent); }
+  .plan-enterprise { background: linear-gradient(135deg,#3BBFBF20,#7B52CC20); color: var(--purple); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN
+═══════════════════════════════════════════════ -->
+<div id="login-view" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">SudentAr</div>
+    <div class="login-sub">Panel de Administración · Solo acceso autorizado</div>
+    <div class="form-group">
+      <label>Correo electrónico</label>
+      <input type="email" id="login-email" placeholder="admin@sudentarsaas.mx">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">
+      Iniciar sesión
+    </button>
+    <div id="login-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     ADMIN APP
+═══════════════════════════════════════════════ -->
+<div id="admin-app" class="admin-wrap" style="display:none">
+  <nav class="admin-nav">
+    <div class="nav-logo">
+      <div class="nav-logo-text">SudentAr</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;margin-top:2px">Admin Sistema</div>
+    </div>
+    <div class="nav-label">Principal</div>
+    <button class="nav-item active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+    <button class="nav-item" onclick="switchTab('clinicas', this)">🏥 Clínicas</button>
+    <button class="nav-item" onclick="switchTab('usuarios', this)">👤 Usuarios</button>
+    <button class="nav-item" onclick="switchTab('invitaciones', this)">✉️ Invitaciones</button>
+    <div class="nav-spacer"></div>
+    <div class="nav-user">
+      <div class="nav-user-name" id="admin-name">Cargando...</div>
+      <div class="nav-user-role">Admin Sistema</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%;color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="view active">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Resumen general de SudentAr SaaS</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val stat-accent" id="stat-clinicas">—</div>
+          <div class="stat-lbl">Clínicas activas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-usuarios">—</div>
+          <div class="stat-lbl">Usuarios totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-pacientes">—</div>
+          <div class="stat-lbl">Pacientes registrados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val stat-green" id="stat-mrr">—</div>
+          <div class="stat-lbl">MRR estimado</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Clínicas por plan</span></div>
+        <table>
+          <thead><tr><th>Clínica</th><th>Plan</th><th>Usuarios</th><th>Pacientes</th><th>Estado</th></tr></thead>
+          <tbody id="dashboard-clinicas-tbl">
+            <tr><td colspan="5"><div class="empty">Cargando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CLÍNICAS -->
+    <div id="tab-clinicas" class="view">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div>
+          <div class="page-title">🏥 Clínicas</div>
+          <div class="page-sub">Registra y gestiona los consultorios suscritos</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-clinica')">＋ Nueva clínica</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Nombre</th><th>RFC</th><th>Plan</th><th>Responsable</th><th>Creada</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="clinicas-tbl">
+            <tr><td colspan="7"><div class="empty">Cargando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="tab-usuarios" class="view">
+      <div class="page-header">
+        <div class="page-title">👤 Usuarios</div>
+        <div class="page-sub">Odontólogos y personal registrado</div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Nombre</th><th>Email</th><th>Clínica</th><th>Rol</th><th>Estado</th><th>Registrado</th></tr></thead>
+          <tbody id="usuarios-tbl">
+            <tr><td colspan="6"><div class="empty">Cargando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INVITACIONES -->
+    <div id="tab-invitaciones" class="view">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div>
+          <div class="page-title">✉️ Invitaciones</div>
+          <div class="page-sub">Invita odontólogos a unirse a su clínica</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-invitar')">✉️ Enviar invitación</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Email</th><th>Clínica</th><th>Rol</th><th>Estado</th><th>Expira</th><th>Acciones</th></tr></thead>
+          <tbody id="invitaciones-tbl">
+            <tr><td colspan="6"><div class="empty">Cargando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════ MODAL: Nueva Clínica ════ -->
+<div class="modal-backdrop" id="modal-clinica">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏥 Registrar Clínica</span>
+      <button class="modal-close" onclick="closeModal('modal-clinica')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Nombre del consultorio *</label>
+        <input id="cl-nombre" placeholder="Ej: Consultorio GDL"></div>
+      <div class="form-group"><label>Razón Social</label>
+        <input id="cl-razon" placeholder="S.C. / S.A. de C.V."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>RFC</label>
+        <input id="cl-rfc" placeholder="XAXX010101000"></div>
+      <div class="form-group"><label>Responsable</label>
+        <input id="cl-responsable" placeholder="Dr. Nombre Apellido"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Email de contacto *</label>
+        <input id="cl-email" type="email" placeholder="clinica@ejemplo.mx"></div>
+      <div class="form-group"><label>Teléfono</label>
+        <input id="cl-tel" placeholder="33 1234 5678"></div>
+    </div>
+    <div class="form-group"><label>Dirección</label>
+      <input id="cl-dir" placeholder="Calle, Número, Colonia, Ciudad"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Plan *</label>
+        <select id="cl-plan" onchange="updatePlanLimits()">
+          <option value="basico">Básico — $399 + IVA</option>
+          <option value="pro">Pro — $599 + IVA</option>
+          <option value="enterprise">Enterprise — Personalizado</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Color identificador</label>
+        <input id="cl-color" type="color" value="#3BBFBF" style="height:40px;cursor:pointer"></div>
+    </div>
+    <div id="plan-info" style="background:#EDE9FA;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--accent);margin-bottom:16px">
+      ✅ Plan Básico: 1 clínica · hasta 5 usuarios · hasta 500 pacientes
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-clinica')">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearClinica()">Registrar Clínica</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: Invitar Odontólogo ════ -->
+<div class="modal-backdrop" id="modal-invitar">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✉️ Invitar Odontólogo</span>
+      <button class="modal-close" onclick="closeModal('modal-invitar')">✕</button>
+    </div>
+    <div class="form-group"><label>Email del odontólogo *</label>
+      <input id="inv-email" type="email" placeholder="doctor@clinica.mx"></div>
+    <div class="form-group"><label>Clínica *</label>
+      <select id="inv-clinica"></select>
+    </div>
+    <div class="form-group"><label>Rol</label>
+      <select id="inv-rol">
+        <option value="odontologo">Odontólogo</option>
+        <option value="admin_clinica">Admin de clínica</option>
+        <option value="recepcion">Recepción</option>
+      </select>
+    </div>
+    <div style="background:#EAF5EE;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green);margin-bottom:16px">
+      📧 Se enviará un email con un enlace seguro válido por 7 días. El odontólogo podrá crear su contraseña al aceptar.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-invitar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="enviarInvitacion()">Enviar Invitación</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// CONFIGURACIÓN — sustituye con tus credenciales
+// ════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://ssfttiwcimzkpbsonzfv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZnR0aXdjaW16a3Bic29uemZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYyNTAsImV4cCI6MjA5Nzk4MjI1MH0.CgxrnhTl4oIOgCguM5Gnr981yq3L57ExcORbWoPpN9s';
+
+const { createClient } = supabase;
+const sb = createClient(https://ssfttiwcimzkpbsonzfv.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZnR0aXdjaW16a3Bic29uemZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYyNTAsImV4cCI6MjA5Nzk4MjI1MH0.CgxrnhTl4oIOgCguM5Gnr981yq3L57ExcORbWoPpN9s);
+
+// ════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════
+let currentUser = null;
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await verifyAdminRole();
+  }
+}
+
+async function verifyAdminRole() {
+  const { data: perfil } = await sb.from('perfiles').select('*').eq('id', currentUser.id).single();
+  if (!perfil || perfil.rol !== 'admin_sistema') {
+    showToast('Acceso denegado: no tienes permisos de administrador');
+    await sb.auth.signOut();
+    return;
+  }
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('admin-app').style.display = 'flex';
+  document.getElementById('admin-name').textContent = perfil.nombre;
+  loadAll();
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  document.getElementById('login-error').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    document.getElementById('login-error').textContent = 'Credenciales incorrectas';
+    return;
+  }
+  const { data: { session } } = await sb.auth.getSession();
+  currentUser = session.user;
+  await verifyAdminRole();
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════
+function switchTab(tab, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  el.classList.add('active');
+  if (tab === 'clinicas')     loadClinicas();
+  if (tab === 'usuarios')     loadUsuarios();
+  if (tab === 'invitaciones') loadInvitaciones();
+}
+
+// ════════════════════════════════════════════════
+// LOAD DATA
+// ════════════════════════════════════════════════
+async function loadAll() {
+  await loadDashboard();
+}
+
+async function loadDashboard() {
+  const [{ data: clinicas }, { data: usuarios }, { data: pacientes }] = await Promise.all([
+    sb.from('clinicas').select('*').eq('activa', true),
+    sb.from('perfiles').select('*'),
+    sb.from('pacientes').select('id'),
+  ]);
+
+  document.getElementById('stat-clinicas').textContent  = clinicas?.length ?? 0;
+  document.getElementById('stat-usuarios').textContent  = usuarios?.length ?? 0;
+  document.getElementById('stat-pacientes').textContent = pacientes?.length ?? 0;
+
+  const mrr = (clinicas || []).reduce((s, c) => {
+    if (c.plan === 'basico') return s + 399;
+    if (c.plan === 'pro')    return s + 599;
+    return s;
+  }, 0);
+  document.getElementById('stat-mrr').textContent = '$' + mrr.toLocaleString('es-MX') + ' MXN';
+
+  document.getElementById('dashboard-clinicas-tbl').innerHTML = (clinicas || []).map(c => {
+    const uCount = (usuarios || []).filter(u => u.clinica_id === c.id).length;
+    return `<tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td><span class="badge badge-${c.plan === 'basico' ? 'teal' : 'purple'} plan-${c.plan}">${c.plan.toUpperCase()}</span></td>
+      <td>${uCount} / ${c.max_usuarios}</td>
+      <td>— / ${c.max_pacientes}</td>
+      <td><span class="badge badge-green">Activa</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5"><div class="empty">Sin clínicas registradas aún</div></td></tr>`;
+}
+
+async function loadClinicas() {
+  const { data } = await sb.from('clinicas').select('*').order('creado_en', { ascending: false });
+  document.getElementById('clinicas-tbl').innerHTML = (data || []).map(c => `
+    <tr>
+      <td><strong>${c.nombre}</strong><br><small style="color:var(--muted)">${c.email || ''}</small></td>
+      <td style="font-size:12px">${c.rfc || '—'}</td>
+      <td><span class="badge badge-${c.plan === 'basico' ? 'teal' : 'purple'} plan-${c.plan}">${c.plan.toUpperCase()}</span></td>
+      <td>${c.responsable || '—'}</td>
+      <td style="font-size:12px">${new Date(c.creado_en).toLocaleDateString('es-MX')}</td>
+      <td><span class="badge badge-${c.activa ? 'green' : 'red'}">${c.activa ? 'Activa' : 'Inactiva'}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="toggleClinica('${c.id}', ${c.activa})">
+          ${c.activa ? '⏸ Suspender' : '▶ Activar'}
+        </button>
+      </td>
+    </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏥</div>Sin clínicas registradas</div></td></tr>`;
+}
+
+async function loadUsuarios() {
+  const { data } = await sb.from('perfiles').select('*, clinicas(nombre)').order('creado_en', { ascending: false });
+  document.getElementById('usuarios-tbl').innerHTML = (data || []).map(u => `
+    <tr>
+      <td><strong>${u.nombre}</strong></td>
+      <td style="font-size:12px">${u.email}</td>
+      <td style="font-size:12px">${u.clinicas?.nombre || '—'}</td>
+      <td><span class="badge badge-${u.rol === 'admin_sistema' ? 'red' : 'purple'}">${u.rol}</span></td>
+      <td><span class="badge badge-${u.activo ? 'green' : 'gray'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+      <td style="font-size:12px">${new Date(u.creado_en).toLocaleDateString('es-MX')}</td>
+    </tr>`).join('') || `<tr><td colspan="6"><div class="empty">Sin usuarios</div></td></tr>`;
+}
+
+async function loadInvitaciones() {
+  // Populate clinicas select
+  const { data: clinicas } = await sb.from('clinicas').select('id, nombre').eq('activa', true);
+  const sel = document.getElementById('inv-clinica');
+  sel.innerHTML = (clinicas || []).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+
+  const { data } = await sb.from('invitaciones').select('*, clinicas(nombre)').order('creado_en', { ascending: false });
+  document.getElementById('invitaciones-tbl').innerHTML = (data || []).map(inv => {
+    const expirada = new Date(inv.expira_en) < new Date();
+    const estado = expirada && inv.estado === 'pendiente' ? 'expirada' : inv.estado;
+    const badgeMap = { pendiente: 'teal', aceptada: 'green', expirada: 'gray', cancelada: 'red' };
+    return `<tr>
+      <td>${inv.email}</td>
+      <td style="font-size:12px">${inv.clinicas?.nombre || '—'}</td>
+      <td><span class="badge badge-purple">${inv.rol}</span></td>
+      <td><span class="badge badge-${badgeMap[estado] || 'gray'}">${estado}</span></td>
+      <td style="font-size:12px">${new Date(inv.expira_en).toLocaleDateString('es-MX')}</td>
+      <td>
+        ${estado === 'pendiente' ? `<button class="btn btn-ghost btn-sm" onclick="copiarLink('${inv.token}')">📋 Copiar link</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6"><div class="empty">Sin invitaciones</div></td></tr>`;
+}
+
+// ════════════════════════════════════════════════
+// ACCIONES
+// ════════════════════════════════════════════════
+const PLAN_CONFIG = {
+  basico:     { max_usuarios: 5,   max_pacientes: 500  },
+  pro:        { max_usuarios: 9999, max_pacientes: 500  },
+  enterprise: { max_usuarios: 9999, max_pacientes: 99999 },
+};
+
+const PLAN_INFO = {
+  basico:     '✅ Plan Básico: 1 clínica · hasta 5 usuarios · hasta 500 pacientes · Soporte L-V 8am-8pm',
+  pro:        '⭐ Plan Pro: 1 clínica · usuarios ilimitados · hasta 500 pacientes · Soporte 24/7',
+  enterprise: '🚀 Enterprise: límites personalizados · soporte dedicado',
+};
+
+function updatePlanLimits() {
+  const plan = document.getElementById('cl-plan').value;
+  document.getElementById('plan-info').textContent = PLAN_INFO[plan];
+}
+
+async function crearClinica() {
+  const plan = document.getElementById('cl-plan').value;
+  const cfg  = PLAN_CONFIG[plan];
+  const payload = {
+    nombre:       document.getElementById('cl-nombre').value.trim(),
+    razon_social: document.getElementById('cl-razon').value.trim(),
+    rfc:          document.getElementById('cl-rfc').value.trim().toUpperCase(),
+    responsable:  document.getElementById('cl-responsable').value.trim(),
+    email:        document.getElementById('cl-email').value.trim(),
+    telefono:     document.getElementById('cl-tel').value.trim(),
+    direccion:    document.getElementById('cl-dir').value.trim(),
+    color:        document.getElementById('cl-color').value,
+    plan,
+    max_usuarios:  cfg.max_usuarios,
+    max_pacientes: cfg.max_pacientes,
+    activa: true,
+  };
+  if (!payload.nombre || !payload.email) return showToast('Nombre y email son obligatorios');
+  const { error } = await sb.from('clinicas').insert(payload);
+  if (error) { showToast('Error: ' + error.message); return; }
+  closeModal('modal-clinica');
+  showToast('✅ Clínica registrada correctamente');
+  loadClinicas();
+  loadDashboard();
+}
+
+async function toggleClinica(id, activa) {
+  const { error } = await sb.from('clinicas').update({ activa: !activa }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message); return; }
+  showToast(activa ? '⏸ Clínica suspendida' : '✅ Clínica activada');
+  loadClinicas();
+}
+
+async function enviarInvitacion() {
+  const email    = document.getElementById('inv-email').value.trim();
+  const clinicaId = document.getElementById('inv-clinica').value;
+  const rol      = document.getElementById('inv-rol').value;
+  if (!email || !clinicaId) return showToast('Email y clínica son obligatorios');
+
+  const { data, error } = await sb.from('invitaciones').insert({
+    email, clinica_id: clinicaId, rol,
+    invitado_por: currentUser.id,
+  }).select().single();
+
+  if (error) { showToast('Error: ' + error.message); return; }
+
+  // Copiar link al portapapeles automáticamente
+  const link = `${location.origin}/accept-invite.html?token=${data.token}`;
+  await navigator.clipboard.writeText(link).catch(() => {});
+
+  closeModal('modal-invitar');
+  showToast('✅ Invitación creada · Link copiado al portapapeles');
+  loadInvitaciones();
+}
+
+async function copiarLink(token) {
+  const link = `${location.origin}/accept-invite.html?token=${token}`;
+  await navigator.clipboard.writeText(link);
+  showToast('📋 Link copiado al portapapeles');
+}
+
+// ════════════════════════════════════════════════
+// MODALS & UI
+// ════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

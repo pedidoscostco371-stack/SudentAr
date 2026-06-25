@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SudentAr — Acepta tu invitación</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Nunito:wght@700;800&display=swap');
+  :root { --accent: #7B52CC; --teal: #3BBFBF; --purple: #3B2D8F; --text: #1A1730; --muted: #7A748F; --border: #DDD9ED; --green: #2D7A4F; --green-bg: #EAF5EE; --red: #B94040; --red-bg: #FAEAEA; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, #3BBFBF15, #7B52CC15); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fff; border-radius: 20px; padding: 44px 40px; width: 100%; max-width: 440px; box-shadow: 0 8px 40px rgba(59,45,143,.12); }
+  .logo { font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 4px;
+    background: linear-gradient(135deg, #3BBFBF, #7B52CC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  .info-box { background: var(--green-bg); border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; }
+  .info-box-title { font-weight: 600; color: var(--green); font-size: 13px; margin-bottom: 2px; }
+  .info-box-detail { color: var(--green); font-size: 12px; }
+  .error-box { background: var(--red-bg); border-radius: 10px; padding: 14px 16px; color: var(--red); font-size: 13px; }
+  label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 5px; }
+  input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 9px; font-family: inherit; font-size: 14px; outline: none; transition: border-color .15s; margin-bottom: 14px; }
+  input:focus { border-color: var(--accent); }
+  .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, var(--teal), var(--accent)); color: #fff; transition: opacity .15s; margin-top: 4px; }
+  .btn:hover { opacity: .9; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .success { text-align: center; display: none; }
+  .success-icon { font-size: 48px; margin-bottom: 12px; }
+  .success-title { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 800; color: var(--purple); margin-bottom: 8px; }
+  .success-msg { color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .loading { text-align: center; color: var(--muted); padding: 20px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">SudentAr</div>
+  <div class="subtitle">Gestión inteligente para tu clínica dental</div>
+
+  <div id="loading-view" class="loading">⏳ Verificando invitación...</div>
+
+  <div id="error-view" style="display:none">
+    <div class="error-box" id="error-msg">Esta invitación no es válida o ha expirado.</div>
+  </div>
+
+  <div id="form-view" style="display:none">
+    <div class="info-box" id="invite-info">
+      <div class="info-box-title">✅ Invitación válida</div>
+      <div class="info-box-detail" id="invite-detail">Cargando...</div>
+    </div>
+    <div>
+      <label>Tu nombre completo *</label>
+      <input id="f-nombre" placeholder="Dr. Nombre Apellido">
+      <label>Contraseña *</label>
+      <input id="f-pass" type="password" placeholder="Mínimo 8 caracteres">
+      <label>Confirmar contraseña *</label>
+      <input id="f-pass2" type="password" placeholder="Repite la contraseña">
+      <div id="form-error" style="color:var(--red);font-size:12px;margin-bottom:10px;min-height:18px"></div>
+      <button class="btn" id="accept-btn" onclick="aceptarInvitacion()">Crear mi cuenta</button>
+    </div>
+  </div>
+
+  <div id="success-view" class="success">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">¡Bienvenido a SudentAr!</div>
+    <div class="success-msg">Tu cuenta fue creada exitosamente.<br>En unos segundos serás redirigido al sistema.</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://ssfttiwcimzkpbsonzfv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZnR0aXdjaW16a3Bic29uemZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYyNTAsImV4cCI6MjA5Nzk4MjI1MH0.CgxrnhTl4oIOgCguM5Gnr981yq3L57ExcORbWoPpN9s';
+const { createClient } = supabase;
+const sb = createClient(https://ssfttiwcimzkpbsonzfv.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZnR0aXdjaW16a3Bic29uemZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYyNTAsImV4cCI6MjA5Nzk4MjI1MH0.CgxrnhTl4oIOgCguM5Gnr981yq3L57ExcORbWoPpN9s);
+
+let invitacion = null;
+
+async function init() {
+  const params = new URLSearchParams(location.search);
+  const token  = params.get('token');
+
+  if (!token) {
+    showError('No se encontró token de invitación en la URL.');
+    return;
+  }
+
+  // Buscar invitación
+  const { data, error } = await sb.from('invitaciones')
+    .select('*, clinicas(nombre, plan)')
+    .eq('token', token)
+    .eq('estado', 'pendiente')
+    .single();
+
+  if (error || !data) {
+    showError('Esta invitación no es válida o ya fue utilizada.');
+    return;
+  }
+
+  if (new Date(data.expira_en) < new Date()) {
+    // Marcar como expirada
+    await sb.from('invitaciones').update({ estado: 'expirada' }).eq('id', data.id);
+    showError('Esta invitación ha expirado. Solicita una nueva invitación al administrador.');
+    return;
+  }
+
+  invitacion = data;
+  document.getElementById('invite-detail').textContent =
+    `Clínica: ${data.clinicas.nombre} · Plan: ${data.clinicas.plan.toUpperCase()} · Rol: ${data.rol}`;
+  document.getElementById('loading-view').style.display = 'none';
+  document.getElementById('form-view').style.display = 'block';
+  document.getElementById('f-nombre').focus();
+}
+
+async function aceptarInvitacion() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const pass   = document.getElementById('f-pass').value;
+  const pass2  = document.getElementById('f-pass2').value;
+  const errEl  = document.getElementById('form-error');
+
+  errEl.textContent = '';
+  if (!nombre) { errEl.textContent = 'Ingresa tu nombre'; return; }
+  if (pass.length < 8) { errEl.textContent = 'La contraseña debe tener al menos 8 caracteres'; return; }
+  if (pass !== pass2) { errEl.textContent = 'Las contraseñas no coinciden'; return; }
+
+  document.getElementById('accept-btn').disabled = true;
+  document.getElementById('accept-btn').textContent = 'Creando cuenta...';
+
+  // Crear usuario en Supabase Auth
+  const { data: authData, error: authErr } = await sb.auth.signUp({
+    email: invitacion.email,
+    password: pass,
+    options: {
+      data: {
+        nombre,
+        clinica_id: invitacion.clinica_id,
+        rol: invitacion.rol,
+      }
+    }
+  });
+
+  if (authErr) {
+    errEl.textContent = 'Error al crear cuenta: ' + authErr.message;
+    document.getElementById('accept-btn').disabled = false;
+    document.getElementById('accept-btn').textContent = 'Crear mi cuenta';
+    return;
+  }
+
+  // El trigger handle_new_user crea el perfil automáticamente
+  // Marcar invitación como aceptada
+  await sb.from('invitaciones').update({ estado: 'aceptada' }).eq('id', invitacion.id);
+
+  // Mostrar éxito
+  document.getElementById('form-view').style.display = 'none';
+  document.getElementById('success-view').style.display = 'block';
+
+  // Redirigir al sistema
+  setTimeout(() => { location.href = '/index.html'; }, 2500);
+}
+
+function showError(msg) {
+  document.getElementById('loading-view').style.display = 'none';
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-view').style.display = 'block';
+}
+
+init();
+</script>
+</body>
+</html>
