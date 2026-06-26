@@ -414,6 +414,12 @@ async function cerrarSesion() {
 
 // ── SEED DEMO (desactivado en producción) ─────────────────────
 function seedDemo() {
+  DB.medicos   = [];
+  DB.pacientes = [];
+  DB.citas     = [];
+  DB.pagos     = [];
+  DB.clinicas  = [];
+}
   // No hace nada en producción — los datos vienen de Supabase
   console.log('SudentAr: modo Supabase activo, seedDemo desactivado');
 }
