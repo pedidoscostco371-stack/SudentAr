@@ -3,232 +3,213 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SudentAr — Gestión Dental</title>
+<title>SudentAr</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Nunito:wght@700;800&display=swap');
-:root {
-  --bg:#F4F3F8;--surface:#fff;--surface2:#EEECF5;--border:#DDD9ED;
-  --teal:#3BBFBF;--teal-light:#E5F7F7;--purple:#7B52CC;--purple-light:#EDE9FA;
-  --dark:#3B2D8F;--text:#1A1730;--muted:#7A748F;
-  --green:#2D7A4F;--green-light:#EAF5EE;--red:#B94040;--red-light:#FAEAEA;
-  --yellow:#8A6E1A;--yellow-light:#FDF6E3;
-  --shadow:0 1px 3px rgba(59,45,143,.08),0 4px 12px rgba(59,45,143,.06);
-  --radius:10px;
-}
+:root{--bg:#F4F3F8;--surface:#fff;--s2:#EEECF5;--border:#DDD9ED;--teal:#3BBFBF;--teal-l:#E5F7F7;--purple:#7B52CC;--purple-l:#EDE9FA;--dark:#3B2D8F;--text:#1A1730;--muted:#7A748F;--green:#2D7A4F;--green-l:#EAF5EE;--red:#B94040;--red-l:#FAEAEA;--yellow:#8A6E1A;--yellow-l:#FDF6E3;--shadow:0 1px 3px rgba(59,45,143,.08),0 4px 12px rgba(59,45,143,.06);--r:10px;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
-/* SIDEBAR */
 .app{display:flex;min-height:100vh;}
-.sidebar{width:220px;background:linear-gradient(160deg,#3BBFBF 0%,#7B52CC 45%,#3B2D8F 100%);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;bottom:0;z-index:100;}
-.sidebar-logo{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:16px;}
-.logo-name{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:#fff;}
-.logo-sub{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.12em;}
-.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);padding:0 20px 6px;margin-top:8px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.75);cursor:pointer;font-size:13.5px;font-weight:500;transition:all .15s;border:none;background:none;width:100%;text-align:left;}
+/* SIDEBAR */
+.sidebar{width:228px;background:linear-gradient(160deg,#3BBFBF 0%,#7B52CC 45%,#3B2D8F 100%);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
+.sidebar-logo{padding:0 20px 20px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:12px;}
+.logo-app{font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#fff;letter-spacing:-.5px;}
+.logo-clinica{font-size:11px;color:rgba(255,255,255,.65);margin-top:3px;font-weight:500;line-height:1.3;}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);padding:0 20px 5px;margin-top:10px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.75);cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;border:none;background:none;width:100%;text-align:left;}
 .nav-item:hover{background:rgba(255,255,255,.12);color:#fff;}
-.nav-item.active{background:rgba(255,255,255,.2);color:#fff;}
-.nav-icon{width:18px;height:18px;flex-shrink:0;opacity:.8;}
-.nav-item.active .nav-icon,.nav-item:hover .nav-icon{opacity:1;}
-.nav-spacer{flex:1;}
-.sidebar-user{padding:16px 20px;border-top:1px solid rgba(255,255,255,.15);}
-.user-name{color:rgba(255,255,255,.9);font-size:13px;font-weight:500;}
+.nav-item.active{background:rgba(255,255,255,.2);color:#fff;font-weight:600;}
+.nav-icon{width:16px;height:16px;flex-shrink:0;}
+.nav-spacer{flex:1;min-height:16px;}
+.sidebar-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,.15);}
+.user-name{color:rgba(255,255,255,.9);font-size:13px;font-weight:600;}
 .user-role{color:rgba(255,255,255,.5);font-size:11px;margin-top:2px;}
-.btn-logout{width:100%;margin-top:10px;padding:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;color:rgba(255,255,255,.75);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;}
-.btn-logout:hover{background:rgba(255,255,255,.2);}
+.btn-logout{width:100%;margin-top:8px;padding:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-logout:hover{background:rgba(255,255,255,.18);color:#fff;}
 /* MAIN */
-.main{margin-left:220px;flex:1;padding:32px;min-height:100vh;}
-.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+.main{margin-left:228px;flex:1;padding:32px;}
+.page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
 .page-title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;}
 .page-sub{color:var(--muted);font-size:13px;margin-top:2px;}
-/* VIEWS */
 .view{display:none;}.view.active{display:block;}
 /* CARDS */
-.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;margin-bottom:20px;}
-.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;margin-bottom:20px;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .card-title{font-weight:600;font-size:14px;}
 /* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-.stat-card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border);}
-.stat-val{font-size:28px;font-weight:700;font-family:'Nunito',sans-serif;color:var(--dark);}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);border:1px solid var(--border);}
+.stat-val{font-size:26px;font-weight:800;font-family:'Nunito',sans-serif;color:var(--dark);}
 .stat-lbl{color:var(--muted);font-size:12px;margin-top:3px;}
 /* TABLE */
 table{width:100%;border-collapse:collapse;}
-th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:10px 16px;text-align:left;background:#FAF9FD;border-bottom:1px solid var(--border);}
-td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:10px 14px;text-align:left;background:#FAF9FD;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#FAFAFE;}
 /* BADGES */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
-.badge-green{background:var(--green-light);color:var(--green);}
-.badge-red{background:var(--red-light);color:var(--red);}
-.badge-teal{background:var(--teal-light);color:#1A7A7A;}
-.badge-purple{background:var(--purple-light);color:var(--purple);}
-.badge-gray{background:var(--surface2);color:var(--muted);}
-.badge-yellow{background:var(--yellow-light);color:var(--yellow);}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;}
+.bg{background:var(--green-l);color:var(--green);}
+.br{background:var(--red-l);color:var(--red);}
+.bt{background:var(--teal-l);color:#1A7A7A;}
+.bp{background:var(--purple-l);color:var(--purple);}
+.bgr{background:var(--s2);color:var(--muted);}
+.by{background:var(--yellow-l);color:var(--yellow);}
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
 .btn-primary{background:linear-gradient(135deg,var(--teal),var(--purple));color:#fff;}
-.btn-primary:hover{opacity:.9;}
+.btn-primary:hover{opacity:.88;}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
 .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
 .btn-ghost:hover{border-color:var(--purple);color:var(--purple);}
-.btn-danger{background:var(--red-light);color:var(--red);border:none;}
+.btn-danger{background:var(--red-l);color:var(--red);border:none;}
 .btn-sm{padding:5px 10px;font-size:12px;}
+.btn-icon{padding:5px;border-radius:6px;}
 /* FORMS */
-.form-group{margin-bottom:16px;}
-.form-label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:5px;}
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px;}
 input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date],input[type=time],input[type=password],select,textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;}
-input:focus,select:focus,textarea:focus{border-color:var(--purple);}
-textarea{resize:vertical;min-height:80px;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+input:focus,select:focus,textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(123,82,204,.1);}
+textarea{resize:vertical;min-height:72px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .form-grid .full{grid-column:1/-1;}
-.section-divider{grid-column:1/-1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.section-sep{grid-column:1/-1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:2px;}
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(30,20,60,.45);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,48,.5);z-index:200;align-items:center;justify-content:center;padding:16px;}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--surface);border-radius:16px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);}
-.modal-sm{max-width:420px;}
-.modal-header{padding:24px 28px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
-.modal-title{font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;}
-.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
-.modal-close:hover{background:var(--surface2);}
-.modal-body{padding:24px 28px;overflow-y:auto;flex:1;}
-.modal-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:660px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.22);}
+.modal-sm{max-width:440px;}
+.modal-md{max-width:560px;}
+.modal-header{padding:22px 26px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.modal-title{font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+.modal-close:hover{background:var(--s2);}
+.modal-body{padding:22px 26px;overflow-y:auto;flex:1;}
+.modal-footer{padding:14px 26px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;}
 /* TABS */
-.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;}
-.tab-btn{padding:8px 16px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab-bar{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+.tab-btn{padding:8px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
 .tab-btn.active{color:var(--purple);border-bottom-color:var(--purple);font-weight:600;}
 .tab-pane{display:none;}.tab-pane.active{display:block;}
-/* TOAST */
-#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--dark);color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:500;opacity:0;transition:opacity .3s;box-shadow:0 4px 20px rgba(59,45,143,.3);max-width:340px;pointer-events:none;}
-#toast.show{opacity:1;}
-/* EMPTY */
-.empty{padding:48px;text-align:center;color:var(--muted);}
-.empty-icon{font-size:32px;margin-bottom:8px;}
-.empty-title{font-size:15px;font-weight:600;margin-bottom:4px;}
-/* CITA HOY */
-.cita-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);}
-.cita-item:last-child{border-bottom:none;}
-.cita-hora{min-width:52px;font-size:15px;font-weight:700;color:var(--dark);}
-.cita-info{flex:1;}
-.cita-pac{font-weight:600;font-size:14px;}
-.cita-det{font-size:12px;color:var(--muted);margin-top:2px;}
-/* FILTROS */
-.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
-.filter-bar input,.filter-bar select{width:auto;flex:1;min-width:140px;}
-/* INGRESO ITEM */
-.mov-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);}
+/* FILTER BAR */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.filter-bar input,.filter-bar select{width:auto;flex:1;min-width:130px;}
+/* ITEMS */
+.mov-item{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);}
 .mov-item:last-child{border-bottom:none;}
 .mov-desc{font-weight:500;font-size:13px;}
 .mov-meta{font-size:11px;color:var(--muted);margin-top:2px;}
-.mov-amount{font-size:15px;font-weight:700;}
-.mov-amount.ingreso{color:var(--green);}
-.mov-amount.egreso{color:var(--red);}
-/* AUDIT BADGE */
-.audit-line{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.mov-amt{font-size:15px;font-weight:700;}
+.mov-amt.ing{color:var(--green);}
+.mov-amt.egr{color:var(--red);}
+.cita-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.cita-item:last-child{border-bottom:none;}
+.cita-hora{min-width:48px;font-size:15px;font-weight:700;color:var(--dark);}
+.cita-info{flex:1;}
+.cita-pac{font-weight:600;}
+.cita-det{font-size:12px;color:var(--muted);margin-top:2px;}
+/* HORARIO GRID */
+.horario-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.horario-day{background:var(--s2);border-radius:8px;padding:8px;font-size:12px;font-weight:600;text-align:center;}
+.horario-day.activo{background:var(--purple-l);color:var(--purple);}
+/* CHECKBOX LIST */
+.check-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.check-list label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:6px 10px;border-radius:7px;border:1.5px solid var(--border);transition:all .15s;}
+.check-list label:hover{border-color:var(--purple);}
+.check-list input[type=checkbox]{width:auto;cursor:pointer;}
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--dark);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transition:opacity .3s;box-shadow:0 4px 20px rgba(59,45,143,.3);max-width:340px;pointer-events:none;}
+#toast.show{opacity:1;}
+.empty{padding:40px;text-align:center;color:var(--muted);}
+.empty-icon{font-size:28px;margin-bottom:6px;}
+.empty-title{font-weight:600;margin-bottom:4px;}
 </style>
 </head>
 <body>
 <div class="app">
-<!-- SIDEBAR -->
+<!-- ═══ SIDEBAR ═══ -->
 <nav class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-name">SudentAr</div>
-    <div class="logo-sub" id="clinica-nombre-sidebar">Cargando...</div>
+    <div class="logo-app">SudentAr</div>
+    <div class="logo-clinica" id="sidebar-clinica-nombre">Cargando...</div>
   </div>
   <span class="nav-label">Principal</span>
   <button class="nav-item active" onclick="switchView('dashboard',this)">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    Dashboard
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
   </button>
   <button class="nav-item" onclick="switchView('pacientes',this)">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Pacientes
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Pacientes
   </button>
   <button class="nav-item" onclick="switchView('citas',this)">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    Citas
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Citas
   </button>
   <button class="nav-item" onclick="switchView('ingresos',this)">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
-    Ingresos
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>Ingresos
   </button>
-  <span class="nav-label">Configuración</span>
+  <span class="nav-label" id="nav-label-config" style="display:none">Configuración</span>
   <button class="nav-item" id="nav-consultorios" onclick="switchView('consultorios',this)" style="display:none">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    Consultorios
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Consultorios
   </button>
   <button class="nav-item" id="nav-medicos" onclick="switchView('medicos',this)" style="display:none">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Médicos
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Médicos
+  </button>
+  <button class="nav-item" id="nav-horarios" onclick="switchView('horarios',this)" style="display:none">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Horarios
+  </button>
+  <button class="nav-item" id="nav-clinica" onclick="switchView('clinica',this)" style="display:none">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Mi Clínica
   </button>
   <div class="nav-spacer"></div>
   <div class="sidebar-user">
     <div class="user-name" id="user-nombre">—</div>
     <div class="user-role" id="user-rol">—</div>
     <button class="btn-logout" onclick="cerrarSesion()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Cerrar sesión
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión
     </button>
   </div>
 </nav>
 
-<!-- MAIN CONTENT -->
+<!-- ═══ MAIN ═══ -->
 <main class="main">
 
 <!-- DASHBOARD -->
 <div id="view-dashboard" class="view active">
   <div class="page-header">
-    <div>
-      <div class="page-title">Dashboard</div>
-      <div class="page-sub" id="dash-fecha">—</div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <input type="date" id="dash-filtro-fecha" style="width:auto" onchange="cargarCitasDia()">
-      <select id="dash-filtro-consultorio" style="width:auto" onchange="cargarCitasDia()">
-        <option value="">Todos los consultorios</option>
-      </select>
+    <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-fecha">—</div></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <input type="date" id="dash-fecha-filtro" style="width:auto" onchange="cargarCitasDia()">
+      <select id="dash-cons-filtro" style="width:auto" onchange="cargarCitasDia()"><option value="">Todos los consultorios</option></select>
+      <button class="btn btn-primary btn-sm" onclick="abrirNuevaCita('')">+ Nueva cita</button>
     </div>
   </div>
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val" id="kpi-citas-hoy">—</div><div class="stat-lbl">Citas hoy</div></div>
-    <div class="stat-card"><div class="stat-val" id="kpi-confirmadas">—</div><div class="stat-lbl">Confirmadas</div></div>
-    <div class="stat-card"><div class="stat-val" id="kpi-pac-total">—</div><div class="stat-lbl">Pacientes totales</div></div>
-    <div class="stat-card"><div class="stat-val" id="kpi-pendientes">—</div><div class="stat-lbl">Con saldo pendiente</div></div>
+    <div class="stat-card"><div class="stat-val" id="kpi-citas">—</div><div class="stat-lbl">Citas hoy</div></div>
+    <div class="stat-card"><div class="stat-val" id="kpi-conf">—</div><div class="stat-lbl">Confirmadas</div></div>
+    <div class="stat-card"><div class="stat-val" id="kpi-pacs">—</div><div class="stat-lbl">Pacientes totales</div></div>
+    <div class="stat-card"><div class="stat-val" id="kpi-saldo">—</div><div class="stat-lbl">Con saldo pendiente</div></div>
   </div>
   <div class="card">
-    <div class="card-header">
-      <span class="card-title">Citas del día</span>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-nueva-cita')">+ Nueva cita</button>
-    </div>
-    <div id="lista-citas-dia">
-      <div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sin citas para este día</div></div>
-    </div>
+    <div class="card-header"><span class="card-title">Citas del día</span></div>
+    <div id="lista-citas-dia"><div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sin citas</div></div></div>
   </div>
 </div>
 
 <!-- PACIENTES -->
 <div id="view-pacientes" class="view">
   <div class="page-header">
-    <div><div class="page-title">Pacientes</div><div class="page-sub" id="count-pac">—</div></div>
+    <div><div class="page-title">Pacientes</div><div class="page-sub" id="count-pacs">—</div></div>
     <button class="btn btn-primary" onclick="openModal('modal-nuevo-paciente')">+ Nuevo paciente</button>
   </div>
   <div class="filter-bar">
-    <input type="text" placeholder="Buscar por nombre, teléfono..." id="buscar-pac" oninput="renderPacientes()">
-    <select id="filtro-tipo-pac" onchange="renderPacientes()">
-      <option value="">Todos</option>
-      <option value="tratamiento">Tratamiento</option>
-      <option value="eventual">Eventual</option>
-    </select>
-    <select id="filtro-cons-pac" onchange="renderPacientes()">
-      <option value="">Todos los consultorios</option>
-    </select>
+    <input type="text" placeholder="Buscar nombre, teléfono..." id="buscar-pac" oninput="renderPacientes()">
+    <select id="filtro-tipo-pac" onchange="renderPacientes()"><option value="">Todos</option><option value="tratamiento">Tratamiento</option><option value="eventual">Eventual</option></select>
+    <select id="filtro-medico-pac" onchange="renderPacientes()"><option value="">Todos los médicos</option></select>
   </div>
   <div class="card">
-    <table>
-      <thead><tr><th>Paciente</th><th>Teléfono</th><th>Médico</th><th>Tratamiento</th><th>Saldo</th><th>Próx. cita</th><th>Estado</th><th></th></tr></thead>
-      <tbody id="tbl-pacientes"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody>
-    </table>
+    <table><thead><tr><th>Paciente</th><th>Teléfono</th><th>Médico</th><th>Tratamiento</th><th>Saldo</th><th>Próx. cita</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="tbl-pacientes"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody></table>
   </div>
 </div>
 
@@ -236,25 +217,17 @@ textarea{resize:vertical;min-height:80px;}
 <div id="view-citas" class="view">
   <div class="page-header">
     <div><div class="page-title">Citas</div></div>
-    <button class="btn btn-primary" onclick="openModal('modal-nueva-cita')">+ Nueva cita</button>
+    <button class="btn btn-primary" onclick="abrirNuevaCita('')">+ Nueva cita</button>
   </div>
   <div class="filter-bar">
     <input type="date" id="filtro-fecha-cita" onchange="renderCitas()">
     <select id="filtro-cons-cita" onchange="renderCitas()"><option value="">Todos los consultorios</option></select>
-    <select id="filtro-medico-cita" onchange="renderCitas()"><option value="">Todos los médicos</option></select>
-    <select id="filtro-estado-cita" onchange="renderCitas()">
-      <option value="">Todos los estados</option>
-      <option value="pendiente">Pendiente</option>
-      <option value="confirmada">Confirmada</option>
-      <option value="atendida">Atendida</option>
-      <option value="cancelada">Cancelada</option>
-    </select>
+    <select id="filtro-med-cita" onchange="renderCitas()"><option value="">Todos los médicos</option></select>
+    <select id="filtro-est-cita" onchange="renderCitas()"><option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="confirmada">Confirmada</option><option value="atendida">Atendida</option><option value="cancelada">Cancelada</option></select>
   </div>
   <div class="card">
-    <table>
-      <thead><tr><th>Fecha / Hora</th><th>Paciente</th><th>Consultorio</th><th>Médico</th><th>Tipo</th><th>Estado</th><th>Registrado por</th><th></th></tr></thead>
-      <tbody id="tbl-citas"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody>
-    </table>
+    <table><thead><tr><th>Fecha / Hora</th><th>Paciente</th><th>Consultorio</th><th>Médico</th><th>Tipo</th><th>Estado</th><th>Registró</th><th></th></tr></thead>
+    <tbody id="tbl-citas"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody></table>
   </div>
 </div>
 
@@ -262,25 +235,23 @@ textarea{resize:vertical;min-height:80px;}
 <div id="view-ingresos" class="view">
   <div class="page-header">
     <div><div class="page-title">Ingresos y Egresos</div></div>
-    <div style="display:flex;gap:10px">
+    <div style="display:flex;gap:10px;">
       <button class="btn btn-primary" onclick="openModal('modal-nuevo-ingreso')">+ Ingreso</button>
-      <button class="btn btn-ghost" onclick="openModal('modal-nuevo-egreso')" style="border-color:var(--red);color:var(--red)">+ Egreso</button>
+      <button class="btn btn-ghost" style="border-color:var(--red);color:var(--red)" onclick="openModal('modal-nuevo-egreso')">+ Egreso</button>
     </div>
   </div>
-  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat-card"><div class="stat-val" style="color:var(--green)" id="ing-total-mes">—</div><div class="stat-lbl">Ingresos del mes</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:var(--red)" id="egr-total-mes">—</div><div class="stat-lbl">Egresos del mes</div></div>
-    <div class="stat-card"><div class="stat-val" id="balance-mes">—</div><div class="stat-lbl">Balance del mes</div></div>
+  <div class="stats-grid-3">
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)" id="ing-mes">—</div><div class="stat-lbl">Ingresos del mes</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--red)" id="egr-mes">—</div><div class="stat-lbl">Egresos del mes</div></div>
+    <div class="stat-card"><div class="stat-val" id="bal-mes">—</div><div class="stat-lbl">Balance del mes</div></div>
   </div>
   <div class="filter-bar">
-    <input type="date" id="filtro-desde-ing">
-    <input type="date" id="filtro-hasta-ing">
+    <input type="date" id="ing-desde"><input type="date" id="ing-hasta">
     <select id="filtro-cons-ing"><option value="">Todos los consultorios</option></select>
     <button class="btn btn-ghost btn-sm" onclick="renderMovimientos()">Filtrar</button>
   </div>
-  <div class="card">
-    <div class="card-header"><span class="card-title">Movimientos</span></div>
-    <div id="lista-movimientos"><div class="empty">Cargando...</div></div>
+  <div class="card"><div class="card-header"><span class="card-title">Movimientos</span></div>
+    <div id="lista-movs"><div class="empty">Cargando...</div></div>
   </div>
 </div>
 
@@ -288,13 +259,11 @@ textarea{resize:vertical;min-height:80px;}
 <div id="view-consultorios" class="view">
   <div class="page-header">
     <div><div class="page-title">Consultorios</div><div class="page-sub">Sedes de tu clínica</div></div>
-    <button class="btn btn-primary" onclick="openModal('modal-nuevo-consultorio')">+ Nuevo consultorio</button>
+    <button class="btn btn-primary" onclick="abrirModalConsultorio()">+ Nuevo consultorio</button>
   </div>
   <div class="card">
-    <table>
-      <thead><tr><th>Nombre</th><th>Dirección</th><th>Teléfono</th><th>Color</th><th></th></tr></thead>
-      <tbody id="tbl-consultorios"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody>
-    </table>
+    <table><thead><tr><th>Nombre</th><th>Dirección</th><th>Teléfono</th><th>Color</th><th></th></tr></thead>
+    <tbody id="tbl-cons"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table>
   </div>
 </div>
 
@@ -302,13 +271,45 @@ textarea{resize:vertical;min-height:80px;}
 <div id="view-medicos" class="view">
   <div class="page-header">
     <div><div class="page-title">Médicos</div></div>
-    <button class="btn btn-primary" onclick="openModal('modal-nuevo-medico')">+ Agregar médico</button>
+    <button class="btn btn-primary" onclick="abrirModalMedico()">+ Agregar médico</button>
   </div>
   <div class="card">
-    <table>
-      <thead><tr><th>Nombre</th><th>Especialidad</th><th>Consultorio(s)</th><th>Estado</th><th></th></tr></thead>
-      <tbody id="tbl-medicos"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody>
-    </table>
+    <table><thead><tr><th>Nombre</th><th>Especialidad</th><th>Consultorios</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="tbl-meds"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table>
+  </div>
+</div>
+
+<!-- HORARIOS -->
+<div id="view-horarios" class="view">
+  <div class="page-header">
+    <div><div class="page-title">Horarios</div><div class="page-sub">Define cuándo y dónde atiende cada médico</div></div>
+    <button class="btn btn-primary" onclick="abrirModalHorario()">+ Agregar horario</button>
+  </div>
+  <div class="card">
+    <table><thead><tr><th>Médico</th><th>Consultorio</th><th>Día</th><th>Horario</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="tbl-horarios"><tr><td colspan="6"><div class="empty">Cargando...</div></td></tr></tbody></table>
+  </div>
+</div>
+
+<!-- MI CLÍNICA -->
+<div id="view-clinica" class="view">
+  <div class="page-header">
+    <div><div class="page-title">Mi Clínica</div><div class="page-sub">Datos generales del consultorio</div></div>
+    <button class="btn btn-primary" onclick="guardarClinica()">Guardar cambios</button>
+  </div>
+  <div class="card">
+    <div class="modal-body" style="padding:24px">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Nombre de la clínica *</label><input type="text" id="cl-nombre"></div>
+        <div class="form-group"><label class="form-label">Nombre comercial</label><input type="text" id="cl-nombre-comercial" placeholder="Nombre que aparece en el sistema"></div>
+        <div class="form-group"><label class="form-label">Razón social</label><input type="text" id="cl-razon"></div>
+        <div class="form-group"><label class="form-label">RFC</label><input type="text" id="cl-rfc"></div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="cl-tel"></div>
+        <div class="form-group"><label class="form-label">Email de contacto</label><input type="email" id="cl-email"></div>
+        <div class="form-group full"><label class="form-label">Dirección</label><input type="text" id="cl-dir"></div>
+        <div class="form-group"><label class="form-label">Responsable</label><input type="text" id="cl-responsable"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -317,48 +318,44 @@ textarea{resize:vertical;min-height:80px;}
 
 <!-- ═══════════ MODALS ═══════════ -->
 
-<!-- NUEVO PACIENTE -->
+<!-- NUEVO PACIENTE / EDITAR -->
 <div class="modal-overlay" id="modal-nuevo-paciente">
 <div class="modal">
-  <div class="modal-header"><span class="modal-title">Nuevo Paciente</span><button class="modal-close" onclick="closeModal('modal-nuevo-paciente')">✕</button></div>
+  <div class="modal-header"><span class="modal-title" id="pac-modal-title">Nuevo Paciente</span><button class="modal-close" onclick="closeModal('modal-nuevo-paciente')">✕</button></div>
   <div class="modal-body">
+    <input type="hidden" id="np-edit-id">
     <div class="form-grid">
-      <div class="section-divider">Datos Personales</div>
+      <div class="section-sep">Datos Personales</div>
       <div class="form-group full"><label class="form-label">Nombre completo *</label><input type="text" id="np-nombre"></div>
       <div class="form-group"><label class="form-label">Fecha de nacimiento</label><input type="date" id="np-nacimiento"></div>
       <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="np-telefono"></div>
       <div class="form-group"><label class="form-label">Email</label><input type="email" id="np-email"></div>
-      <div class="form-group"><label class="form-label">CURP</label><input type="text" id="np-curp" placeholder="XAXX010101HXXXXX00"></div>
-      <div class="form-group full"><label class="form-label">Dirección</label><input type="text" id="np-direccion"></div>
-      <div class="form-group"><label class="form-label">Contacto emergencia</label><input type="text" id="np-emergencia"></div>
-      <div class="form-group"><label class="form-label">Tel. emergencia</label><input type="tel" id="np-emergencia-tel"></div>
-      <div class="section-divider">Historia Clínica</div>
+      <div class="form-group"><label class="form-label">CURP</label><input type="text" id="np-curp"></div>
+      <div class="form-group full"><label class="form-label">Dirección</label><input type="text" id="np-dir"></div>
+      <div class="form-group"><label class="form-label">Contacto emergencia</label><input type="text" id="np-emg"></div>
+      <div class="form-group"><label class="form-label">Tel. emergencia</label><input type="tel" id="np-emg-tel"></div>
+      <div class="section-sep">Historia Clínica</div>
       <div class="form-group"><label class="form-label">Alergias</label><input type="text" id="np-alergias" placeholder="Ninguna"></div>
-      <div class="form-group"><label class="form-label">Enfermedades</label><input type="text" id="np-enfermedades" placeholder="Ninguna"></div>
-      <div class="form-group"><label class="form-label">Medicamentos</label><input type="text" id="np-medicamentos" placeholder="Ninguno"></div>
+      <div class="form-group"><label class="form-label">Enfermedades</label><input type="text" id="np-enf" placeholder="Ninguna"></div>
+      <div class="form-group"><label class="form-label">Medicamentos</label><input type="text" id="np-meds" placeholder="Ninguno"></div>
       <div class="form-group"><label class="form-label">Grupo sanguíneo</label>
-        <select id="np-grupo-sang"><option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
-      </div>
-      <div class="form-group full"><label class="form-label">Antecedentes</label><textarea id="np-antecedentes" placeholder="Cirugías previas, tratamientos anteriores..."></textarea></div>
-      <div class="section-divider">Plan de Tratamiento</div>
-      <div class="form-group"><label class="form-label">Tipo de paciente</label>
-        <select id="np-tipo" onchange="toggleCostoNP()">
-          <option value="eventual">Visita eventual</option>
-          <option value="tratamiento">Plan de tratamiento</option>
-        </select>
-      </div>
+        <select id="np-gsang"><option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      <div class="form-group full"><label class="form-label">Antecedentes</label><textarea id="np-ant"></textarea></div>
+      <div class="section-sep">Plan de Tratamiento</div>
+      <div class="form-group"><label class="form-label">Tipo *</label>
+        <select id="np-tipo" onchange="toggleTratamiento()"><option value="eventual">Visita eventual</option><option value="tratamiento">Plan de tratamiento</option></select></div>
       <div class="form-group"><label class="form-label">Médico tratante</label><select id="np-medico"></select></div>
-      <div class="form-group full"><label class="form-label">Motivo de consulta</label><textarea id="np-motivo"></textarea></div>
-      <div class="form-group full"><label class="form-label">Diagnóstico</label><input type="text" id="np-diagnostico"></div>
-      <div class="form-group" id="np-costo-wrap" style="display:none"><label class="form-label">Costo total tratamiento ($)</label><input type="number" id="np-costo" placeholder="0.00"></div>
-      <div class="form-group full" id="np-trat-wrap" style="display:none"><label class="form-label">Descripción del tratamiento</label><input type="text" id="np-tratamiento"></div>
-      <div class="form-group"><label class="form-label">Próxima cita</label><input type="date" id="np-proxima-cita"></div>
-      <div class="form-group"><label class="form-label">Hora</label><input type="time" id="np-hora-cita"></div>
+      <div class="form-group full"><label class="form-label">Motivo de consulta</label><textarea id="np-motivo" rows="2"></textarea></div>
+      <div class="form-group full"><label class="form-label">Diagnóstico</label><input type="text" id="np-diag"></div>
+      <div class="form-group full" id="np-trat-wrap" style="display:none"><label class="form-label">Descripción del tratamiento</label><input type="text" id="np-trat"></div>
+      <div class="form-group" id="np-costo-wrap" style="display:none"><label class="form-label">Costo total ($)</label><input type="number" id="np-costo" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Próxima cita</label><input type="date" id="np-prox"></div>
+      <div class="form-group"><label class="form-label">Hora</label><input type="time" id="np-hora"></div>
     </div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('modal-nuevo-paciente')">Cancelar</button>
-    <button class="btn btn-primary" id="btn-guardar-pac" onclick="guardarPaciente()">Registrar Paciente</button>
+    <button class="btn btn-primary" id="btn-save-pac" onclick="guardarPaciente()">Registrar Paciente</button>
   </div>
 </div>
 </div>
@@ -367,167 +364,165 @@ textarea{resize:vertical;min-height:80px;}
 <div class="modal-overlay" id="modal-detalle">
 <div class="modal" style="max-width:780px">
   <div class="modal-header">
-    <span class="modal-title" id="detalle-nombre">—</span>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-ghost btn-sm" id="btn-editar-pac" onclick="editarPaciente()">Editar</button>
-      <button class="modal-close" onclick="closeModal('modal-detalle')">✕</button>
-    </div>
+    <span class="modal-title" id="det-nombre">—</span>
+    <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="editarPaciente()">Editar</button><button class="modal-close" onclick="closeModal('modal-detalle')">✕</button></div>
   </div>
   <div class="modal-body">
     <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchTab(this,'tab-clinico')">Expediente</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-financiero')">Financiero</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-citas-pac')">Citas</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-archivos')">Archivos</button>
+      <button class="tab-btn active" onclick="switchTab(this,'tp-exp')">Expediente</button>
+      <button class="tab-btn" onclick="switchTab(this,'tp-fin')">Financiero</button>
+      <button class="tab-btn" onclick="switchTab(this,'tp-cit')">Citas</button>
+      <button class="tab-btn" onclick="switchTab(this,'tp-arc')">Archivos</button>
     </div>
-    <div id="tab-clinico" class="tab-pane active"></div>
-    <div id="tab-financiero" class="tab-pane"></div>
-    <div id="tab-citas-pac" class="tab-pane"></div>
-    <div id="tab-archivos" class="tab-pane"></div>
+    <div id="tp-exp" class="tab-pane active"></div>
+    <div id="tp-fin" class="tab-pane"></div>
+    <div id="tp-cit" class="tab-pane"></div>
+    <div id="tp-arc" class="tab-pane"></div>
   </div>
 </div>
 </div>
 
-<!-- NUEVA CITA -->
-<div class="modal-overlay" id="modal-nueva-cita">
-<div class="modal modal-sm">
-  <div class="modal-header"><span class="modal-title" id="cita-modal-title">Nueva Cita</span><button class="modal-close" onclick="closeModal('modal-nueva-cita')">✕</button></div>
+<!-- NUEVA / EDITAR CITA -->
+<div class="modal-overlay" id="modal-cita">
+<div class="modal modal-md">
+  <div class="modal-header"><span class="modal-title" id="cita-title">Nueva Cita</span><button class="modal-close" onclick="closeModal('modal-cita')">✕</button></div>
   <div class="modal-body">
     <input type="hidden" id="cita-edit-id">
-    <div class="form-group"><label class="form-label">Paciente *</label><select id="cita-paciente-id"></select></div>
-    <div class="form-group"><label class="form-label">Consultorio *</label><select id="cita-consultorio-id" onchange="filtrarMedicosPorConsultorio()"></select></div>
-    <div class="form-group"><label class="form-label">Médico *</label><select id="cita-medico-id"></select></div>
+    <div class="form-group"><label class="form-label">Paciente *</label><select id="cita-pac-id"></select></div>
     <div class="form-grid">
-      <div class="form-group"><label class="form-label">Fecha *</label><input type="date" id="cita-fecha"></div>
-      <div class="form-group"><label class="form-label">Hora *</label><input type="time" id="cita-hora"></div>
+      <div class="form-group"><label class="form-label">Consultorio *</label><select id="cita-cons-id" onchange="onConsultorioCitaChange()"></select></div>
+      <div class="form-group"><label class="form-label">Médico *</label><select id="cita-med-id" onchange="validarHorarioCita()"></select></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Fecha *</label><input type="date" id="cita-fecha" onchange="validarHorarioCita()"></div>
+      <div class="form-group"><label class="form-label">Hora *</label><input type="time" id="cita-hora" onchange="validarHorarioCita()"></div>
+    </div>
+    <!-- ALERTA HORARIO -->
+    <div id="alerta-horario" style="display:none;background:var(--yellow-l);border:1px solid #D4A843;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--yellow);margin-bottom:12px;">
+      <strong>Aviso:</strong> <span id="alerta-horario-msg"></span>
     </div>
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Tipo</label>
-        <select id="cita-tipo">
-          <option value="consulta">Consulta</option>
-          <option value="limpieza">Limpieza</option>
-          <option value="tratamiento">Tratamiento</option>
-          <option value="ortodoncia">Ortodoncia</option>
-          <option value="extraccion">Extracción</option>
-          <option value="endodoncia">Endodoncia</option>
-          <option value="cirugia">Cirugía</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">Duración (min)</label><input type="number" id="cita-duracion" value="60" min="15" step="15"></div>
+        <select id="cita-tipo"><option value="consulta">Consulta</option><option value="limpieza">Limpieza</option><option value="tratamiento">Tratamiento</option><option value="ortodoncia">Ortodoncia</option><option value="extraccion">Extracción</option><option value="endodoncia">Endodoncia</option><option value="cirugia">Cirugía</option><option value="otro">Otro</option></select></div>
+      <div class="form-group"><label class="form-label">Duración (min)</label><input type="number" id="cita-dur" value="60" min="15" step="15"></div>
     </div>
     <div class="form-group"><label class="form-label">Notas</label><textarea id="cita-notas" rows="2"></textarea></div>
-    <div class="form-group" id="motivo-cambio-wrap" style="display:none"><label class="form-label">Motivo del cambio</label><input type="text" id="cita-motivo-cambio"></div>
+    <div id="motivo-wrap" style="display:none" class="form-group"><label class="form-label">Motivo del cambio</label><input type="text" id="cita-motivo"></div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-nueva-cita')">Cancelar</button>
-    <button class="btn btn-primary" id="btn-guardar-cita" onclick="guardarCita()">Agendar Cita</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-cita')">Cancelar</button>
+    <button class="btn btn-primary" id="btn-save-cita" onclick="guardarCita()">Agendar Cita</button>
   </div>
 </div>
 </div>
 
-<!-- NUEVO INGRESO -->
+<!-- INGRESO -->
 <div class="modal-overlay" id="modal-nuevo-ingreso">
 <div class="modal modal-sm">
   <div class="modal-header"><span class="modal-title">Registrar Ingreso</span><button class="modal-close" onclick="closeModal('modal-nuevo-ingreso')">✕</button></div>
   <div class="modal-body">
-    <div class="form-group"><label class="form-label">Paciente</label><select id="ing-paciente-id"><option value="">— Sin paciente asociado —</option></select></div>
-    <div class="form-group"><label class="form-label">Consultorio</label><select id="ing-consultorio-id"></select></div>
-    <div class="form-group"><label class="form-label">Tipo</label>
-      <select id="ing-tipo">
-        <option value="abono">Abono a tratamiento</option>
-        <option value="visita">Pago por visita</option>
-        <option value="anticipo">Anticipo</option>
-      </select>
-    </div>
-    <div class="form-group"><label class="form-label">Monto *</label><input type="number" id="ing-monto" placeholder="0.00" min="0" step="0.01"></div>
-    <div class="form-group"><label class="form-label">Forma de pago</label>
-      <select id="ing-forma">
-        <option value="efectivo">Efectivo</option>
-        <option value="transferencia">Transferencia</option>
-        <option value="tarjeta">Tarjeta</option>
-        <option value="cheque">Cheque</option>
-      </select>
-    </div>
+    <div class="form-group"><label class="form-label">Paciente</label><select id="ing-pac"></select></div>
+    <div class="form-group"><label class="form-label">Consultorio</label><select id="ing-cons"></select></div>
+    <div class="form-group"><label class="form-label">Tipo</label><select id="ing-tipo"><option value="abono">Abono a tratamiento</option><option value="visita">Pago por visita</option><option value="anticipo">Anticipo</option></select></div>
+    <div class="form-group"><label class="form-label">Monto *</label><input type="number" id="ing-monto" min="0" step="0.01"></div>
+    <div class="form-group"><label class="form-label">Forma de pago</label><select id="ing-forma"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="cheque">Cheque</option></select></div>
     <div class="form-group"><label class="form-label">Concepto</label><input type="text" id="ing-concepto"></div>
     <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="ing-fecha"></div>
     <div class="form-group"><label class="form-label">Notas</label><textarea id="ing-notas" rows="2"></textarea></div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('modal-nuevo-ingreso')">Cancelar</button>
-    <button class="btn btn-primary" onclick="guardarIngreso()">Registrar Ingreso</button>
+    <button class="btn btn-primary" onclick="guardarIngreso()">Registrar</button>
   </div>
 </div>
 </div>
 
-<!-- NUEVO EGRESO -->
+<!-- EGRESO -->
 <div class="modal-overlay" id="modal-nuevo-egreso">
 <div class="modal modal-sm">
   <div class="modal-header"><span class="modal-title">Registrar Egreso</span><button class="modal-close" onclick="closeModal('modal-nuevo-egreso')">✕</button></div>
   <div class="modal-body">
-    <div class="form-group"><label class="form-label">Consultorio</label><select id="egr-consultorio-id"></select></div>
-    <div class="form-group"><label class="form-label">Categoría</label>
-      <select id="egr-categoria">
-        <option value="material">Material dental</option>
-        <option value="renta">Renta / local</option>
-        <option value="servicios">Servicios (luz, agua, internet)</option>
-        <option value="equipo">Equipo y mantenimiento</option>
-        <option value="nomina">Nómina / honorarios</option>
-        <option value="otro">Otro</option>
-      </select>
-    </div>
-    <div class="form-group"><label class="form-label">Monto *</label><input type="number" id="egr-monto" placeholder="0.00" min="0" step="0.01"></div>
-    <div class="form-group"><label class="form-label">Forma de pago</label>
-      <select id="egr-forma">
-        <option value="efectivo">Efectivo</option>
-        <option value="transferencia">Transferencia</option>
-        <option value="tarjeta">Tarjeta</option>
-        <option value="cheque">Cheque</option>
-      </select>
-    </div>
+    <div class="form-group"><label class="form-label">Consultorio</label><select id="egr-cons"></select></div>
+    <div class="form-group"><label class="form-label">Categoría</label><select id="egr-cat"><option value="material">Material dental</option><option value="renta">Renta / local</option><option value="servicios">Servicios (luz, agua, internet)</option><option value="equipo">Equipo y mantenimiento</option><option value="nomina">Nómina / honorarios</option><option value="otro">Otro</option></select></div>
+    <div class="form-group"><label class="form-label">Monto *</label><input type="number" id="egr-monto" min="0" step="0.01"></div>
+    <div class="form-group"><label class="form-label">Forma de pago</label><select id="egr-forma"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="cheque">Cheque</option></select></div>
     <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="egr-concepto"></div>
     <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="egr-fecha"></div>
     <div class="form-group"><label class="form-label">Notas</label><textarea id="egr-notas" rows="2"></textarea></div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('modal-nuevo-egreso')">Cancelar</button>
-    <button class="btn btn-primary" onclick="guardarEgreso()">Registrar Egreso</button>
+    <button class="btn btn-primary" onclick="guardarEgreso()">Registrar</button>
   </div>
 </div>
 </div>
 
-<!-- NUEVO CONSULTORIO -->
-<div class="modal-overlay" id="modal-nuevo-consultorio">
+<!-- CONSULTORIO -->
+<div class="modal-overlay" id="modal-consultorio">
 <div class="modal modal-sm">
-  <div class="modal-header"><span class="modal-title">Nuevo Consultorio</span><button class="modal-close" onclick="closeModal('modal-nuevo-consultorio')">✕</button></div>
+  <div class="modal-header"><span class="modal-title" id="cons-modal-title">Nuevo Consultorio</span><button class="modal-close" onclick="closeModal('modal-consultorio')">✕</button></div>
   <div class="modal-body">
-    <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="cons-nombre" placeholder="Ej: Consultorio Ocotlán"></div>
+    <input type="hidden" id="cons-edit-id">
+    <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="cons-nombre"></div>
     <div class="form-group"><label class="form-label">Dirección</label><input type="text" id="cons-dir"></div>
     <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="cons-tel"></div>
-    <div class="form-group"><label class="form-label">Color identificador</label><input type="color" id="cons-color" value="#3BBFBF" style="height:40px;cursor:pointer"></div>
+    <div class="form-group"><label class="form-label">Color identificador</label><input type="color" id="cons-color" value="#3BBFBF" style="height:40px;cursor:pointer;padding:2px;"></div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-nuevo-consultorio')">Cancelar</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-consultorio')">Cancelar</button>
     <button class="btn btn-primary" onclick="guardarConsultorio()">Guardar</button>
   </div>
 </div>
 </div>
 
-<!-- NUEVO MÉDICO -->
-<div class="modal-overlay" id="modal-nuevo-medico">
-<div class="modal modal-sm">
-  <div class="modal-header"><span class="modal-title">Agregar Médico</span><button class="modal-close" onclick="closeModal('modal-nuevo-medico')">✕</button></div>
+<!-- MÉDICO -->
+<div class="modal-overlay" id="modal-medico">
+<div class="modal modal-md">
+  <div class="modal-header"><span class="modal-title" id="med-modal-title">Agregar Médico</span><button class="modal-close" onclick="closeModal('modal-medico')">✕</button></div>
   <div class="modal-body">
-    <div class="form-group"><label class="form-label">Nombre completo *</label><input type="text" id="med-nombre"></div>
-    <div class="form-group"><label class="form-label">Especialidad</label><input type="text" id="med-especialidad" placeholder="Odontología General"></div>
-    <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="med-tel"></div>
-    <div class="form-group"><label class="form-label">Email</label><input type="email" id="med-email"></div>
-    <div class="form-group"><label class="form-label">Consultorio(s) asignado(s)</label><div id="med-consultorios-check" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div></div>
-    <div class="form-group"><label class="form-label">Color identificador</label><input type="color" id="med-color" value="#7B52CC" style="height:40px;cursor:pointer"></div>
+    <input type="hidden" id="med-edit-id">
+    <div class="form-grid">
+      <div class="form-group full"><label class="form-label">Nombre completo *</label><input type="text" id="med-nombre"></div>
+      <div class="form-group"><label class="form-label">Especialidad</label><input type="text" id="med-esp" placeholder="Odontología General"></div>
+      <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="med-tel"></div>
+      <div class="form-group full"><label class="form-label">Email</label><input type="email" id="med-email"></div>
+      <div class="form-group full">
+        <label class="form-label">Consultorios asignados</label>
+        <div id="med-cons-checks" class="check-list"></div>
+        <div id="med-cons-empty" style="font-size:12px;color:var(--muted);margin-top:6px;display:none">Primero crea al menos un consultorio en la sección Consultorios.</div>
+      </div>
+      <div class="form-group"><label class="form-label">Color identificador</label><input type="color" id="med-color" value="#7B52CC" style="height:40px;cursor:pointer;padding:2px;"></div>
+    </div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-nuevo-medico')">Cancelar</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-medico')">Cancelar</button>
     <button class="btn btn-primary" onclick="guardarMedico()">Guardar</button>
+  </div>
+</div>
+</div>
+
+<!-- HORARIO -->
+<div class="modal-overlay" id="modal-horario">
+<div class="modal modal-sm">
+  <div class="modal-header"><span class="modal-title" id="hor-modal-title">Agregar Horario</span><button class="modal-close" onclick="closeModal('modal-horario')">✕</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="hor-edit-id">
+    <div class="form-group"><label class="form-label">Médico *</label><select id="hor-med-id" onchange="filtrarConsultoriosMedico()"></select></div>
+    <div class="form-group"><label class="form-label">Consultorio *</label><select id="hor-cons-id"></select></div>
+    <div class="form-group"><label class="form-label">Día de la semana *</label>
+      <select id="hor-dia">
+        <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
+        <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Hora inicio *</label><input type="time" id="hor-inicio" value="09:00"></div>
+      <div class="form-group"><label class="form-label">Hora fin *</label><input type="time" id="hor-fin" value="14:00"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-horario')">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarHorario()">Guardar</button>
   </div>
 </div>
 </div>
@@ -535,20 +530,15 @@ textarea{resize:vertical;min-height:80px;}
 <!-- ABONO -->
 <div class="modal-overlay" id="modal-abono">
 <div class="modal modal-sm">
-  <div class="modal-header"><span class="modal-title" id="abono-titulo">Registrar Pago</span><button class="modal-close" onclick="closeModal('modal-abono')">✕</button></div>
+  <div class="modal-header"><span class="modal-title" id="abo-title">Registrar Pago</span><button class="modal-close" onclick="closeModal('modal-abono')">✕</button></div>
   <div class="modal-body">
-    <input type="hidden" id="abono-pac-id">
-    <div class="form-group"><label class="form-label">Monto *</label><input type="number" id="abono-monto" placeholder="0.00" min="0" step="0.01"></div>
-    <div class="form-group"><label class="form-label">Forma de pago</label>
-      <select id="abono-forma">
-        <option value="efectivo">Efectivo</option>
-        <option value="transferencia">Transferencia</option>
-        <option value="tarjeta">Tarjeta</option>
-      </select>
-    </div>
-    <div class="form-group"><label class="form-label">Concepto</label><input type="text" id="abono-concepto"></div>
-    <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="abono-fecha"></div>
-    <div class="form-group"><label class="form-label">Notas</label><textarea id="abono-notas" rows="2"></textarea></div>
+    <input type="hidden" id="abo-pac-id">
+    <input type="hidden" id="abo-tipo-pac">
+    <div class="form-group"><label class="form-label">Monto *</label><input type="number" id="abo-monto" min="0" step="0.01"></div>
+    <div class="form-group"><label class="form-label">Forma de pago</label><select id="abo-forma"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option></select></div>
+    <div class="form-group"><label class="form-label">Concepto</label><input type="text" id="abo-concepto"></div>
+    <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="abo-fecha"></div>
+    <div class="form-group"><label class="form-label">Notas</label><textarea id="abo-notas" rows="2"></textarea></div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('modal-abono')">Cancelar</button>
@@ -561,26 +551,18 @@ textarea{resize:vertical;min-height:80px;}
 
 <script>
 // ══════════════════════════════════════════════
-// CONFIG SUPABASE
+// CONFIG
 // ══════════════════════════════════════════════
-const SB_URL  = 'https://ssfttiwcimzkpbsonzfv.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZnR0aXdjaW16a3Bic29uemZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYyNTAsImV4cCI6MjA5Nzk4MjI1MH0.CgxrnhTl4oIOgCguM5Gnr981yq3L57ExcORbWoPpN9s';
+const SB_URL = 'https://ssfttiwcimzkpbsonzfv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZnR0aXdjaW16a3Bic29uemZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYyNTAsImV4cCI6MjA5Nzk4MjI1MH0.CgxrnhTl4oIOgCguM5Gnr981yq3L57ExcORbWoPpN9s';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-let CLINICA_ID = null;
-let USER_ID    = null;
-let USER_ROL   = null;
-let USER_CONS  = []; // consultorios asignados (para asistente)
-
-let _pacientes    = [];
-let _citas        = [];
-let _pagos        = [];
-let _consultorios = [];
-let _medicos      = [];
-let _currentPacId = null;
+let CLINICA_ID=null, USER_ID=null, USER_ROL=null, USER_NOMBRE='', USER_CONS=[];
+let _pacs=[], _citas=[], _pagos=[], _cons=[], _meds=[], _horarios=[], _clinicaData=null;
+let _currentPacId=null;
 
 // ══════════════════════════════════════════════
 // INIT
@@ -589,218 +571,226 @@ async function init() {
   const { data:{ session } } = await sb.auth.getSession();
   if (!session) { window.location.replace('/login'); return; }
   USER_ID = session.user.id;
-
-  const { data: perfil } = await sb.from('perfiles').select('*,clinicas(nombre)').eq('id', USER_ID).single();
+  const { data: perfil } = await sb.from('perfiles').select('*,clinicas(*)').eq('id', USER_ID).single();
   if (!perfil) { window.location.replace('/login'); return; }
-
   CLINICA_ID = perfil.clinica_id;
   USER_ROL   = perfil.rol;
+  USER_NOMBRE = perfil.nombre || perfil.email;
+  USER_CONS  = perfil.consultorios_ids || [];
+  _clinicaData = perfil.clinicas;
 
-  document.getElementById('user-nombre').textContent = perfil.nombre || perfil.email;
-  document.getElementById('user-rol').textContent = { admin_sistema:'Admin Sistema', admin_clinica:'Admin Clínica', asistente:'Asistente', odontologo:'Odontólogo' }[USER_ROL] || USER_ROL;
-  document.getElementById('clinica-nombre-sidebar').textContent = perfil.clinicas?.nombre || '—';
+  document.getElementById('user-nombre').textContent = USER_NOMBRE;
+  document.getElementById('user-rol').textContent = {admin_sistema:'Admin Sistema',admin_clinica:'Admin Clínica',asistente:'Asistente',odontologo:'Odontólogo'}[USER_ROL]||USER_ROL;
+  const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || '—';
+  document.getElementById('sidebar-clinica-nombre').textContent = clinicaNombre;
+  document.title = 'SudentAr — ' + clinicaNombre;
 
-  // Mostrar menús según rol
   if (['admin_sistema','admin_clinica'].includes(USER_ROL)) {
-    document.getElementById('nav-consultorios').style.display = 'flex';
-    document.getElementById('nav-medicos').style.display = 'flex';
-  }
-
-  // Para asistente, obtener consultorios asignados
-  if (USER_ROL === 'asistente') {
-    USER_CONS = perfil.consultorios_ids || [];
+    ['nav-consultorios','nav-medicos','nav-horarios','nav-clinica','nav-label-config'].forEach(id => {
+      const el=document.getElementById(id); if(el) el.style.display='';
+    });
+  } else if (USER_ROL === 'asistente') {
+    ['nav-horarios','nav-label-config'].forEach(id => {
+      const el=document.getElementById(id); if(el) el.style.display='';
+    });
   }
 
   await cargarTodo();
-  setFechaHoy();
+  setFechasHoy();
+  cargarDatosClinica();
   renderAll();
 }
 
 async function cargarTodo() {
-  const [
-    { data: pacs },
-    { data: citas },
-    { data: pagos },
-    { data: cons },
-    { data: meds }
-  ] = await Promise.all([
-    sb.from('pacientes').select('*').eq('clinica_id', CLINICA_ID).order('nombre'),
-    sb.from('citas').select('*').eq('clinica_id', CLINICA_ID).order('fecha').order('hora'),
-    sb.from('pagos').select('*').eq('clinica_id', CLINICA_ID).order('fecha', { ascending: false }),
-    sb.from('consultorios').select('*').eq('clinica_id', CLINICA_ID).order('nombre'),
-    sb.from('medicos').select('*').eq('clinica_id', CLINICA_ID).order('nombre'),
+  const [r1,r2,r3,r4,r5,r6] = await Promise.all([
+    sb.from('pacientes').select('*').eq('clinica_id',CLINICA_ID).order('nombre'),
+    sb.from('citas').select('*').eq('clinica_id',CLINICA_ID).order('fecha').order('hora'),
+    sb.from('pagos').select('*').eq('clinica_id',CLINICA_ID).order('fecha',{ascending:false}),
+    sb.from('consultorios').select('*').eq('clinica_id',CLINICA_ID).eq('activo',true).order('nombre'),
+    sb.from('medicos').select('*').eq('clinica_id',CLINICA_ID).order('nombre'),
+    sb.from('horarios').select('*').eq('clinica_id',CLINICA_ID).eq('activo',true),
   ]);
+  _pacs     = r1.data||[];
+  _citas    = r2.data||[];
+  _pagos    = r3.data||[];
+  _cons     = r4.data||[];
+  _meds     = r5.data||[];
+  _horarios = r6.data||[];
 
-  _pacientes    = pacs    || [];
-  _citas        = citas   || [];
-  _pagos        = pagos   || [];
-  _consultorios = cons    || [];
-  _medicos      = meds    || [];
-
-  // Filtrar por rol
-  if (USER_ROL === 'odontologo') {
-    _citas     = _citas.filter(c => c.medico_id === USER_ID);
-    _pacientes = _pacientes.filter(p => p.medico_id === USER_ID);
+  if (USER_ROL==='odontologo') {
+    _citas = _citas.filter(c=>c.medico_id===USER_ID);
+    _pacs  = _pacs.filter(p=>p.medico_id===USER_ID);
   }
-  if (USER_ROL === 'asistente' && USER_CONS.length) {
-    _citas = _citas.filter(c => USER_CONS.includes(c.consultorio_id));
+  if (USER_ROL==='asistente' && USER_CONS.length) {
+    _citas = _citas.filter(c=>USER_CONS.includes(c.consultorio_id));
   }
 }
 
 function renderAll() {
-  poblateSelects();
+  poblarSelects();
   renderPacientes();
   renderCitas();
   cargarCitasDia();
   renderMovimientos();
   renderConsultorios();
   renderMedicos();
+  renderHorarios();
   renderKPIs();
 }
 
 // ══════════════════════════════════════════════
-// UTILIDADES
+// UTILS
 // ══════════════════════════════════════════════
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DIAS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-function formatDate(d) { if (!d) return '—'; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; }
-function formatMoney(n) { return '$' + Number(n||0).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
-function getPac(id) { return _pacientes.find(p => p.id == id); }
-function getCons(id) { return _consultorios.find(c => c.id == id); }
-function getMed(id) { return _medicos.find(m => m.id == id); }
+function fmtDate(d) { if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`; }
+function fmtMoney(n) { return '$'+Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function getPac(id) { return _pacs.find(p=>p.id==id); }
+function getCons(id) { return _cons.find(c=>c.id==id); }
+function getMed(id) { return _meds.find(m=>m.id==id); }
 function saldoPac(p) {
-  const pagado = _pagos.filter(pg => pg.paciente_id == p.id && pg.tipo !== 'egreso').reduce((s,pg) => s + Number(pg.monto), 0);
-  return Math.max(0, Number(p.costo_total||0) - pagado);
+  const pag=_pagos.filter(pg=>pg.paciente_id==p.id&&pg.tipo!=='egreso').reduce((s,pg)=>s+Number(pg.monto),0);
+  return Math.max(0,Number(p.costo_total||0)-pag);
 }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
+function showToast(msg,ok=true) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=ok?'var(--dark)':'var(--red)';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);
 }
-
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-});
-
-function switchView(name, el) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+function switchView(name,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
   el.classList.add('active');
 }
-
-function switchTab(el, paneId) {
-  el.closest('.modal-body').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  el.closest('.modal-body').querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById(paneId).classList.add('active');
+function switchTab(el,id){
+  el.closest('.modal-body').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.closest('.modal-body').querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');document.getElementById(id).classList.add('active');
 }
-
-function setFechaHoy() {
-  const t = todayStr();
-  document.getElementById('dash-filtro-fecha').value = t;
-  document.getElementById('dash-fecha').textContent = new Date().toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  document.getElementById('ing-fecha').value = t;
-  document.getElementById('egr-fecha').value = t;
-  document.getElementById('abono-fecha').value = t;
+function setFechasHoy(){
+  const t=todayStr();
+  ['dash-fecha-filtro','ing-fecha','egr-fecha','abo-fecha'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});
+  document.getElementById('dash-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 }
 
 // ══════════════════════════════════════════════
 // SELECTS
 // ══════════════════════════════════════════════
-function poblateSelects() {
-  const consOpts = _consultorios.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-  const consOptsAll = '<option value="">Todos</option>' + consOpts;
-  const medOpts = '<option value="">— Seleccionar —</option>' + _medicos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
-  const medOptsAll = '<option value="">Todos</option>' + _medicos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
-  const pacOpts = '<option value="">— Seleccionar —</option>' + _pacientes.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+function poblarSelects() {
+  const consOpts = _cons.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+  const consAll  = '<option value="">Todos los consultorios</option>'+consOpts;
+  const consNone = '<option value="">— Sin asignar —</option>'+consOpts;
+  const medOpts  = _meds.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('');
+  const medAll   = '<option value="">Todos los médicos</option>'+medOpts;
+  const medNone  = '<option value="">— Seleccionar —</option>'+medOpts;
+  const pacOpts  = _pacs.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  const pacAll   = '<option value="">Todos</option>'+pacOpts;
+  const pacNone  = '<option value="">— Sin paciente —</option>'+pacOpts;
+  const pacSel   = '<option value="">— Seleccionar —</option>'+pacOpts;
 
-  ['filtro-cons-pac','filtro-cons-cita','filtro-cons-ing','dash-filtro-consultorio'].forEach(id => {
-    const el = document.getElementById(id); if (el) { const v=el.value; el.innerHTML=consOptsAll; el.value=v; }
+  ['dash-cons-filtro','filtro-cons-cita','filtro-cons-ing'].forEach(id=>{
+    const el=document.getElementById(id);if(el){const v=el.value;el.innerHTML=consAll;el.value=v;}
   });
-  ['ing-consultorio-id','egr-consultorio-id','cons-color'].forEach(id => {}); // skip
-  ['ing-consultorio-id','egr-consultorio-id'].forEach(id => {
-    const el = document.getElementById(id); if (el) { el.innerHTML = '<option value="">— Sin asignar —</option>' + consOpts; }
+  ['filtro-med-cita','filtro-medico-pac'].forEach(id=>{
+    const el=document.getElementById(id);if(el){const v=el.value;el.innerHTML=medAll;el.value=v;}
   });
-  const citaCons = document.getElementById('cita-consultorio-id');
-  if (citaCons) { citaCons.innerHTML = '<option value="">— Seleccionar —</option>' + consOpts; }
-  const citaMed = document.getElementById('cita-medico-id');
-  if (citaMed) citaMed.innerHTML = medOpts;
-  const filtMed = document.getElementById('filtro-medico-cita');
-  if (filtMed) filtMed.innerHTML = medOptsAll;
-  const citaPac = document.getElementById('cita-paciente-id');
-  if (citaPac) citaPac.innerHTML = pacOpts;
-  const ingPac = document.getElementById('ing-paciente-id');
-  if (ingPac) ingPac.innerHTML = '<option value="">— Sin paciente —</option>' + _pacientes.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
-  const npMed = document.getElementById('np-medico');
-  if (npMed) npMed.innerHTML = '<option value="">— Sin asignar —</option>' + _medicos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+  ['ing-cons','egr-cons','hor-cons-id'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.innerHTML=consNone;
+  });
+  const citaCons=document.getElementById('cita-cons-id');
+  if(citaCons){const v=citaCons.value;citaCons.innerHTML='<option value="">— Seleccionar —</option>'+consOpts;citaCons.value=v;}
+  const citaMed=document.getElementById('cita-med-id');
+  if(citaMed){const v=citaMed.value;citaMed.innerHTML=medNone;citaMed.value=v;}
+  const npMed=document.getElementById('np-medico');
+  if(npMed)npMed.innerHTML='<option value="">— Sin asignar —</option>'+medOpts;
+  const citaPac=document.getElementById('cita-pac-id');
+  if(citaPac){const v=citaPac.value;citaPac.innerHTML=pacSel;citaPac.value=v;}
+  const ingPac=document.getElementById('ing-pac');
+  if(ingPac)ingPac.innerHTML=pacNone;
+  const horMed=document.getElementById('hor-med-id');
+  if(horMed)horMed.innerHTML='<option value="">— Seleccionar —</option>'+medOpts;
 
-  // Checkboxes de consultorios para médico
-  const checksEl = document.getElementById('med-consultorios-check');
-  if (checksEl) checksEl.innerHTML = _consultorios.map(c => `
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-      <input type="checkbox" value="${c.id}" style="width:auto"> ${c.nombre}
+  // Checkboxes médico-consultorios
+  actualizarChecksMedCons();
+}
+
+function actualizarChecksMedCons(selIds=[]) {
+  const el=document.getElementById('med-cons-checks');
+  const emEl=document.getElementById('med-cons-empty');
+  if(!el)return;
+  if(!_cons.length){el.innerHTML='';if(emEl)emEl.style.display='';return;}
+  if(emEl)emEl.style.display='none';
+  el.innerHTML=_cons.map(c=>`
+    <label>
+      <input type="checkbox" value="${c.id}" ${selIds.includes(c.id)?'checked':''}
+             style="width:auto;accent-color:var(--purple)">
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${c.color||'#888'};flex-shrink:0;display:inline-block"></span>
+        ${c.nombre}
+      </span>
     </label>`).join('');
 }
 
-function filtrarMedicosPorConsultorio() {
-  const consId = document.getElementById('cita-consultorio-id').value;
-  const meds = consId ? _medicos.filter(m => (m.consultorios_ids||[]).includes(consId)) : _medicos;
-  document.getElementById('cita-medico-id').innerHTML =
-    '<option value="">— Seleccionar —</option>' + meds.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+function onConsultorioCitaChange() {
+  const consId=document.getElementById('cita-cons-id').value;
+  const meds=consId?_meds.filter(m=>(m.consultorios_ids||[]).includes(consId)):_meds;
+  document.getElementById('cita-med-id').innerHTML=
+    '<option value="">— Seleccionar —</option>'+meds.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('');
+  validarHorarioCita();
 }
 
-function toggleCostoNP() {
-  const tipo = document.getElementById('np-tipo').value;
-  document.getElementById('np-costo-wrap').style.display = tipo === 'tratamiento' ? '' : 'none';
-  document.getElementById('np-trat-wrap').style.display  = tipo === 'tratamiento' ? '' : 'none';
+function filtrarConsultoriosMedico() {
+  const medId=document.getElementById('hor-med-id').value;
+  const med=getMed(medId);
+  const consIds=med?.consultorios_ids||[];
+  const opts=consIds.length
+    ?_cons.filter(c=>consIds.includes(c.id)).map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('')
+    :_cons.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+  document.getElementById('hor-cons-id').innerHTML='<option value="">— Seleccionar —</option>'+opts;
 }
 
 // ══════════════════════════════════════════════
 // KPIs
 // ══════════════════════════════════════════════
 function renderKPIs() {
-  const hoy = todayStr();
-  const citasHoy = _citas.filter(c => c.fecha === hoy);
-  document.getElementById('kpi-citas-hoy').textContent   = citasHoy.length;
-  document.getElementById('kpi-confirmadas').textContent = citasHoy.filter(c => c.estado === 'confirmada').length;
-  document.getElementById('kpi-pac-total').textContent   = _pacientes.length;
-  document.getElementById('kpi-pendientes').textContent  = _pacientes.filter(p => p.tipo === 'tratamiento' && saldoPac(p) > 0).length;
+  const hoy=todayStr();
+  const ch=_citas.filter(c=>c.fecha===hoy);
+  document.getElementById('kpi-citas').textContent=ch.length;
+  document.getElementById('kpi-conf').textContent=ch.filter(c=>c.estado==='confirmada').length;
+  document.getElementById('kpi-pacs').textContent=_pacs.length;
+  document.getElementById('kpi-saldo').textContent=_pacs.filter(p=>p.tipo==='tratamiento'&&saldoPac(p)>0).length;
 }
 
 // ══════════════════════════════════════════════
-// DASHBOARD — CITAS DEL DÍA
+// DASHBOARD
 // ══════════════════════════════════════════════
 function cargarCitasDia() {
-  const fecha = document.getElementById('dash-filtro-fecha').value || todayStr();
-  const consId = document.getElementById('dash-filtro-consultorio').value;
-  let citas = _citas.filter(c => c.fecha === fecha);
-  if (consId) citas = citas.filter(c => c.consultorio_id === consId);
-  citas.sort((a,b) => a.hora.localeCompare(b.hora));
-  const el = document.getElementById('lista-citas-dia');
-  if (!citas.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sin citas para este día</div></div>';
-    return;
-  }
-  el.innerHTML = citas.map(c => {
-    const pac  = getPac(c.paciente_id);
-    const cons = getCons(c.consultorio_id);
-    const med  = getMed(c.medico_id);
-    const color = cons?.color || '#888';
-    const badge = { pendiente:'badge-yellow', confirmada:'badge-green', atendida:'badge-teal', cancelada:'badge-red' }[c.estado] || 'badge-gray';
-    return `<div class="cita-item" style="border-left:3px solid ${color}">
+  const fecha=document.getElementById('dash-fecha-filtro').value||todayStr();
+  const consId=document.getElementById('dash-cons-filtro').value;
+  let citas=_citas.filter(c=>c.fecha===fecha);
+  if(consId)citas=citas.filter(c=>c.consultorio_id===consId);
+  citas.sort((a,b)=>a.hora.localeCompare(b.hora));
+  const el=document.getElementById('lista-citas-dia');
+  if(!citas.length){el.innerHTML='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sin citas para este día</div></div>';return;}
+  el.innerHTML=citas.map(c=>{
+    const pac=getPac(c.paciente_id),cons=getCons(c.consultorio_id),med=getMed(c.medico_id);
+    const col=cons?.color||'#DDD9ED';
+    const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br'}[c.estado]||'bgr';
+    return`<div class="cita-item" style="border-left:3px solid ${col}">
       <div class="cita-hora">${c.hora?.substring(0,5)||'—'}</div>
       <div class="cita-info">
-        <div class="cita-pac">${pac?.nombre || '—'}</div>
+        <div class="cita-pac">${pac?.nombre||'—'}</div>
         <div class="cita-det">${c.tipo} · ${cons?.nombre||'—'} · ${med?.nombre||'—'}</div>
-        ${c.notas ? `<div class="cita-det">${c.notas}</div>` : ''}
+        ${c.notas?`<div class="cita-det">${c.notas}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        <span class="badge ${badge}">${c.estado}</span>
-        ${c.estado === 'pendiente' ? `<button class="btn btn-ghost btn-sm" onclick="confirmarCita('${c.id}')">Confirmar</button>` : ''}
+        <span class="badge ${bp}">${c.estado}</span>
+        ${c.estado==='pendiente'?`<button class="btn btn-ghost btn-sm" onclick="confirmarCita('${c.id}')">Confirmar</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -810,255 +800,235 @@ function cargarCitasDia() {
 // PACIENTES
 // ══════════════════════════════════════════════
 function renderPacientes() {
-  const q    = (document.getElementById('buscar-pac')?.value || '').toLowerCase();
-  const tipo = document.getElementById('filtro-tipo-pac')?.value || '';
-  const cons = document.getElementById('filtro-cons-pac')?.value || '';
-  let pacs = _pacientes.filter(p => {
-    const mq = !q || p.nombre.toLowerCase().includes(q) || (p.telefono||'').includes(q) || (p.email||'').toLowerCase().includes(q);
-    const mt = !tipo || p.tipo === tipo;
-    const mc = !cons || p.consultorio_id === cons;
-    return mq && mt && mc;
+  const q=(document.getElementById('buscar-pac')?.value||'').toLowerCase();
+  const tipo=document.getElementById('filtro-tipo-pac')?.value||'';
+  const med=document.getElementById('filtro-medico-pac')?.value||'';
+  let pacs=_pacs.filter(p=>{
+    const mq=!q||p.nombre.toLowerCase().includes(q)||(p.telefono||'').includes(q)||(p.email||'').toLowerCase().includes(q);
+    const mt=!tipo||p.tipo===tipo;
+    const mm=!med||p.medico_id===med;
+    return mq&&mt&&mm;
   });
-  document.getElementById('count-pac').textContent = pacs.length + ' paciente(s)';
-  const tbody = document.getElementById('tbl-pacientes');
-  if (!pacs.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty">Sin resultados</div></td></tr>`; return; }
-  tbody.innerHTML = pacs.map(p => {
-    const saldo = saldoPac(p);
-    const med = getMed(p.medico_id);
-    return `<tr>
+  document.getElementById('count-pacs').textContent=pacs.length+' paciente(s)';
+  const tbody=document.getElementById('tbl-pacientes');
+  if(!pacs.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty">Sin resultados</div></td></tr>`;return;}
+  tbody.innerHTML=pacs.map(p=>{
+    const s=saldoPac(p),med=getMed(p.medico_id);
+    return`<tr>
       <td><strong>${p.nombre}</strong></td>
       <td>${p.telefono||'—'}</td>
-      <td>${med?.nombre||'—'}</td>
+      <td style="font-size:12px">${med?.nombre||'—'}</td>
       <td style="font-size:12px">${p.tratamiento||(p.tipo==='eventual'?'Eventual':'—')}</td>
-      <td>${saldo > 0 ? `<span class="badge badge-red">${formatMoney(saldo)}</span>` : `<span class="badge badge-green">Al día</span>`}</td>
-      <td style="font-size:12px">${formatDate(p.proxima_cita)}</td>
-      <td><span class="badge ${p.tipo==='tratamiento'?'badge-teal':'badge-gray'}">${p.tipo==='tratamiento'?'Tratamiento':'Eventual'}</span></td>
+      <td>${s>0?`<span class="badge br">${fmtMoney(s)}</span>`:`<span class="badge bg">Al día</span>`}</td>
+      <td style="font-size:12px">${fmtDate(p.proxima_cita)}</td>
+      <td><span class="badge ${p.tipo==='tratamiento'?'bt':'bgr'}">${p.tipo==='tratamiento'?'Tratamiento':'Eventual'}</span></td>
       <td><button class="btn btn-ghost btn-sm" onclick="verPaciente('${p.id}')">Ver</button></td>
     </tr>`;
   }).join('');
 }
 
-async function guardarPaciente() {
-  const nombre = document.getElementById('np-nombre').value.trim();
-  if (!nombre) return showToast('El nombre es obligatorio');
-  const btn = document.getElementById('btn-guardar-pac');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-  const { data, error } = await sb.from('pacientes').insert({
-    clinica_id: CLINICA_ID,
-    nombre, nacimiento: document.getElementById('np-nacimiento').value||null,
-    telefono: document.getElementById('np-telefono').value||null,
-    email: document.getElementById('np-email').value||null,
-    curp: document.getElementById('np-curp').value||null,
-    direccion: document.getElementById('np-direccion').value||null,
-    emergencia_nombre: document.getElementById('np-emergencia').value||null,
-    emergencia_tel: document.getElementById('np-emergencia-tel').value||null,
-    alergias: document.getElementById('np-alergias').value||null,
-    enfermedades: document.getElementById('np-enfermedades').value||null,
-    medicamentos: document.getElementById('np-medicamentos').value||null,
-    grupo_sang: document.getElementById('np-grupo-sang').value||null,
-    antecedentes: document.getElementById('np-antecedentes').value||null,
-    motivo: document.getElementById('np-motivo').value||null,
-    diagnostico: document.getElementById('np-diagnostico').value||null,
-    tipo: document.getElementById('np-tipo').value,
-    medico_id: document.getElementById('np-medico').value||null,
-    tratamiento: document.getElementById('np-tratamiento').value||null,
-    costo_total: parseFloat(document.getElementById('np-costo').value)||0,
-    proxima_cita: document.getElementById('np-proxima-cita').value||null,
-    hora_cita: document.getElementById('np-hora-cita').value||null,
-    creado_por: USER_ID,
-  }).select().single();
-  btn.disabled = false; btn.textContent = 'Registrar Paciente';
-  if (error) { showToast('Error: ' + error.message); return; }
-  _pacientes.push(data);
-  closeModal('modal-nuevo-paciente');
-  renderPacientes();
-  renderKPIs();
-  showToast('Paciente registrado');
-  verPaciente(data.id);
+function toggleTratamiento(){
+  const t=document.getElementById('np-tipo').value==='tratamiento';
+  document.getElementById('np-costo-wrap').style.display=t?'':'none';
+  document.getElementById('np-trat-wrap').style.display=t?'':'none';
 }
 
-function verPaciente(id) {
-  _currentPacId = id;
-  const p = getPac(id);
-  if (!p) return;
-  document.getElementById('detalle-nombre').textContent = p.nombre;
-  const pagos = _pagos.filter(pg => pg.paciente_id == id);
-  const pagado = pagos.filter(pg => pg.tipo !== 'egreso').reduce((s,pg) => s+Number(pg.monto),0);
-  const saldo = saldoPac(p);
-  const med = getMed(p.medico_id);
-  // TAB CLÍNICO
-  document.getElementById('tab-clinico').innerHTML = `
+function abrirNuevoPaciente(){
+  document.getElementById('pac-modal-title').textContent='Nuevo Paciente';
+  document.getElementById('btn-save-pac').textContent='Registrar Paciente';
+  document.getElementById('btn-save-pac').onclick=guardarPaciente;
+  document.getElementById('np-edit-id').value='';
+  ['np-nombre','np-telefono','np-email','np-curp','np-dir','np-emg','np-emg-tel','np-alergias','np-enf','np-meds','np-ant','np-motivo','np-diag','np-trat','np-costo','np-prox','np-hora'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('np-gsang').value='';
+  document.getElementById('np-tipo').value='eventual';
+  document.getElementById('np-medico').value='';
+  toggleTratamiento();
+  openModal('modal-nuevo-paciente');
+}
+
+async function guardarPaciente(){
+  const nombre=document.getElementById('np-nombre').value.trim();
+  if(!nombre)return showToast('El nombre es obligatorio',false);
+  const editId=document.getElementById('np-edit-id').value;
+  const btn=document.getElementById('btn-save-pac');
+  btn.disabled=true;btn.textContent='Guardando...';
+  const payload={
+    clinica_id:CLINICA_ID,nombre,
+    nacimiento:document.getElementById('np-nacimiento')?.value||null,
+    telefono:document.getElementById('np-telefono').value||null,
+    email:document.getElementById('np-email').value||null,
+    curp:document.getElementById('np-curp').value||null,
+    direccion:document.getElementById('np-dir').value||null,
+    emergencia_nombre:document.getElementById('np-emg').value||null,
+    emergencia_tel:document.getElementById('np-emg-tel').value||null,
+    alergias:document.getElementById('np-alergias').value||null,
+    enfermedades:document.getElementById('np-enf').value||null,
+    medicamentos:document.getElementById('np-meds').value||null,
+    grupo_sang:document.getElementById('np-gsang').value||null,
+    antecedentes:document.getElementById('np-ant').value||null,
+    motivo:document.getElementById('np-motivo').value||null,
+    diagnostico:document.getElementById('np-diag').value||null,
+    tipo:document.getElementById('np-tipo').value,
+    medico_id:document.getElementById('np-medico').value||null,
+    tratamiento:document.getElementById('np-trat').value||null,
+    costo_total:parseFloat(document.getElementById('np-costo').value)||0,
+    proxima_cita:document.getElementById('np-prox').value||null,
+    hora_cita:document.getElementById('np-hora').value||null,
+    creado_por:USER_ID,
+  };
+  if(editId){
+    const {error}=await sb.from('pacientes').update(payload).eq('id',editId);
+    btn.disabled=false;btn.textContent='Guardar cambios';
+    if(error){showToast('Error: '+error.message,false);return;}
+    const idx=_pacs.findIndex(p=>p.id==editId);
+    if(idx>=0)_pacs[idx]={..._pacs[idx],...payload};
+    closeModal('modal-nuevo-paciente');renderPacientes();showToast('Paciente actualizado');
+    verPaciente(editId);
+  } else {
+    const {data,error}=await sb.from('pacientes').insert(payload).select().single();
+    btn.disabled=false;btn.textContent='Registrar Paciente';
+    if(error){showToast('Error: '+error.message,false);return;}
+    _pacs.push(data);
+    closeModal('modal-nuevo-paciente');renderPacientes();renderKPIs();
+    showToast('Paciente registrado');verPaciente(data.id);
+  }
+}
+
+function verPaciente(id){
+  _currentPacId=id;
+  const p=getPac(id);if(!p)return;
+  document.getElementById('det-nombre').textContent=p.nombre;
+  const pagos=_pagos.filter(pg=>pg.paciente_id==id&&pg.tipo!=='egreso');
+  const pagado=pagos.reduce((s,pg)=>s+Number(pg.monto),0);
+  const saldo=saldoPac(p);const med=getMed(p.medico_id);
+
+  // EXPEDIENTE
+  document.getElementById('tp-exp').innerHTML=`
     <div class="form-grid">
-      <div><div class="form-label">Fecha de nacimiento</div><div>${formatDate(p.nacimiento)}</div></div>
+      <div><div class="form-label">Fecha de nacimiento</div><div>${fmtDate(p.nacimiento)}</div></div>
       <div><div class="form-label">Teléfono</div><div>${p.telefono||'—'}</div></div>
       <div><div class="form-label">Email</div><div>${p.email||'—'}</div></div>
       <div><div class="form-label">CURP</div><div>${p.curp||'—'}</div></div>
       <div class="full"><div class="form-label">Dirección</div><div>${p.direccion||'—'}</div></div>
       <div><div class="form-label">Contacto emergencia</div><div>${p.emergencia_nombre||'—'}</div></div>
       <div><div class="form-label">Tel. emergencia</div><div>${p.emergencia_tel||'—'}</div></div>
-      <div class="full" style="height:1px;background:var(--border);margin:8px 0"></div>
+      <div class="full" style="height:1px;background:var(--border);margin:6px 0"></div>
       <div><div class="form-label">Alergias</div><div>${p.alergias||'Ninguna'}</div></div>
       <div><div class="form-label">Enfermedades</div><div>${p.enfermedades||'Ninguna'}</div></div>
       <div><div class="form-label">Medicamentos</div><div>${p.medicamentos||'Ninguno'}</div></div>
       <div><div class="form-label">Grupo sanguíneo</div><div>${p.grupo_sang||'—'}</div></div>
       <div class="full"><div class="form-label">Antecedentes</div><div>${p.antecedentes||'—'}</div></div>
-      <div class="full" style="height:1px;background:var(--border);margin:8px 0"></div>
+      <div class="full" style="height:1px;background:var(--border);margin:6px 0"></div>
       <div><div class="form-label">Médico tratante</div><div>${med?.nombre||'—'}</div></div>
-      <div><div class="form-label">Tipo</div><div><span class="badge ${p.tipo==='tratamiento'?'badge-teal':'badge-gray'}">${p.tipo==='tratamiento'?'Tratamiento':'Eventual'}</span></div></div>
+      <div><div class="form-label">Tipo</div><span class="badge ${p.tipo==='tratamiento'?'bt':'bgr'}">${p.tipo==='tratamiento'?'Tratamiento':'Eventual'}</span></div>
       <div class="full"><div class="form-label">Motivo</div><div>${p.motivo||'—'}</div></div>
       <div class="full"><div class="form-label">Diagnóstico</div><div>${p.diagnostico||'—'}</div></div>
       ${p.tipo==='tratamiento'?`<div class="full"><div class="form-label">Tratamiento</div><div>${p.tratamiento||'—'}</div></div>`:''}
     </div>`;
-  // TAB FINANCIERO
-  document.getElementById('tab-financiero').innerHTML = p.tipo === 'tratamiento' ? `
-    <div style="background:var(--surface2);border-radius:10px;padding:16px 20px;margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Costo total</span><strong>${formatMoney(p.costo_total)}</strong></div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Total pagado</span><strong style="color:var(--green)">${formatMoney(pagado)}</strong></div>
-      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700"><span>Saldo pendiente</span><span style="color:${saldo>0?'var(--red)':'var(--green)'}">${formatMoney(saldo)}</span></div>
-      <div style="background:var(--border);border-radius:99px;height:6px;margin-top:12px"><div style="background:var(--green);border-radius:99px;height:6px;width:${Math.min(100,p.costo_total>0?pagado/p.costo_total*100:0)}%"></div></div>
+
+  // FINANCIERO
+  const pct=p.costo_total>0?Math.min(100,pagado/p.costo_total*100):0;
+  document.getElementById('tp-fin').innerHTML=p.tipo==='tratamiento'?`
+    <div style="background:var(--s2);border-radius:10px;padding:16px 20px;margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:7px"><span>Costo total</span><strong>${fmtMoney(p.costo_total)}</strong></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:7px"><span>Total pagado</span><strong style="color:var(--green)">${fmtMoney(pagado)}</strong></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px solid var(--border);padding-top:7px"><span>Saldo pendiente</span><span style="color:${saldo>0?'var(--red)':'var(--green)'}">${fmtMoney(saldo)}</span></div>
+      <div style="background:var(--border);border-radius:99px;height:5px;margin-top:10px"><div style="background:var(--green);border-radius:99px;height:5px;width:${pct}%;transition:width .4s"></div></div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <strong>Historial de pagos</strong>
-      <button class="btn btn-primary btn-sm" onclick="abrirAbono('${p.id}','tratamiento')">+ Abono</button>
-    </div>
-    ${pagos.length ? pagos.map(pg => `<div class="mov-item"><div><div class="mov-desc">${pg.concepto||pg.tipo}</div><div class="mov-meta">${formatDate(pg.fecha)} · ${pg.forma_pago}</div></div><div class="mov-amount ingreso">${formatMoney(pg.monto)}</div></div>`).join('') : '<div class="empty" style="padding:20px">Sin pagos registrados</div>'}
-  ` : `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-      <button class="btn btn-primary btn-sm" onclick="abrirAbono('${p.id}','visita')">+ Pago visita</button>
-    </div>
-    ${pagos.length ? pagos.map(pg => `<div class="mov-item"><div><div class="mov-desc">${pg.concepto||pg.tipo}</div><div class="mov-meta">${formatDate(pg.fecha)} · ${pg.forma_pago}</div></div><div class="mov-amount ingreso">${formatMoney(pg.monto)}</div></div>`).join('') : '<div class="empty" style="padding:20px">Sin pagos registrados</div>'}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong>Historial de pagos</strong><button class="btn btn-primary btn-sm" onclick="abrirAbono('${p.id}','tratamiento')">+ Abono</button></div>
+    ${pagos.length?pagos.map(pg=>`<div class="mov-item"><div><div class="mov-desc">${pg.concepto||pg.tipo}</div><div class="mov-meta">${fmtDate(pg.fecha)} · ${pg.forma_pago} · ${pg.creado_por_nombre||'—'}</div></div><div class="mov-amt ing">${fmtMoney(pg.monto)}</div></div>`).join(''):'<div class="empty" style="padding:20px">Sin pagos registrados</div>'}
+  `:`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-primary btn-sm" onclick="abrirAbono('${p.id}','visita')">+ Pago por visita</button></div>
+    ${pagos.length?pagos.map(pg=>`<div class="mov-item"><div><div class="mov-desc">${pg.concepto||pg.tipo}</div><div class="mov-meta">${fmtDate(pg.fecha)} · ${pg.forma_pago} · ${pg.creado_por_nombre||'—'}</div></div><div class="mov-amt ing">${fmtMoney(pg.monto)}</div></div>`).join(''):'<div class="empty" style="padding:20px">Sin pagos registrados</div>'}
   `;
-  // TAB CITAS
-  const citasPac = _citas.filter(c => c.paciente_id == id).sort((a,b) => b.fecha.localeCompare(a.fecha));
-  document.getElementById('tab-citas-pac').innerHTML = `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-      <button class="btn btn-primary btn-sm" onclick="closeModal('modal-detalle');abrirNuevaCita('${p.id}')">+ Agendar cita</button>
-    </div>
-    ${citasPac.length ? citasPac.map(c => {
-      const cons = getCons(c.consultorio_id);
-      const medC = getMed(c.medico_id);
-      const badge = { pendiente:'badge-yellow',confirmada:'badge-green',atendida:'badge-teal',cancelada:'badge-red' }[c.estado]||'badge-gray';
-      return `<div class="mov-item"><div><div class="mov-desc">${formatDate(c.fecha)} ${c.hora?.substring(0,5)||''} — ${c.tipo}</div><div class="mov-meta">${cons?.nombre||'—'} · ${medC?.nombre||'—'}</div>${c.notas?`<div class="mov-meta">${c.notas}</div>`:''}</div><span class="badge ${badge}">${c.estado}</span></div>`;
-    }).join('') : '<div class="empty" style="padding:20px">Sin citas registradas</div>'}
+
+  // CITAS
+  const cits=_citas.filter(c=>c.paciente_id==id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  document.getElementById('tp-cit').innerHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-primary btn-sm" onclick="closeModal('modal-detalle');abrirNuevaCita('${p.id}')">+ Agendar cita</button></div>
+    ${cits.length?cits.map(c=>{
+      const co=getCons(c.consultorio_id),md=getMed(c.medico_id);
+      const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br'}[c.estado]||'bgr';
+      return`<div class="mov-item"><div><div class="mov-desc">${fmtDate(c.fecha)} ${c.hora?.substring(0,5)||''} — ${c.tipo}</div><div class="mov-meta">${co?.nombre||'—'} · ${md?.nombre||'—'}</div>${c.notas?`<div class="mov-meta">${c.notas}</div>`:''}<div class="mov-meta">Registró: ${c.creado_por_nombre||'—'}</div></div><span class="badge ${bp}">${c.estado}</span></div>`;
+    }).join(''):'<div class="empty" style="padding:20px">Sin citas registradas</div>'}
   `;
-  // TAB ARCHIVOS
-  document.getElementById('tab-archivos').innerHTML = `
+
+  // ARCHIVOS
+  document.getElementById('tp-arc').innerHTML=`
     <div style="margin-bottom:14px">
       <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:var(--purple);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Subir archivo
         <input type="file" multiple style="display:none" onchange="subirArchivo('${p.id}',this)">
       </label>
       <span style="font-size:11px;color:var(--muted);margin-left:10px">PDF, imágenes, radiografías</span>
     </div>
-    <div id="archivos-grid-${p.id}">
-      <div class="empty" style="padding:20px">Sin archivos cargados</div>
-    </div>
+    <div class="empty" style="padding:20px">Integración con almacenamiento disponible próximamente</div>
   `;
   openModal('modal-detalle');
 }
 
-function editarPaciente() {
-  const p = getPac(_currentPacId);
-  if (!p) return;
-  // Simple inline edit — reutiliza el modal de nuevo paciente con datos precargados
-  document.getElementById('np-nombre').value = p.nombre||'';
-  document.getElementById('np-nacimiento').value = p.nacimiento||'';
-  document.getElementById('np-telefono').value = p.telefono||'';
-  document.getElementById('np-email').value = p.email||'';
-  document.getElementById('np-curp').value = p.curp||'';
-  document.getElementById('np-direccion').value = p.direccion||'';
-  document.getElementById('np-emergencia').value = p.emergencia_nombre||'';
-  document.getElementById('np-emergencia-tel').value = p.emergencia_tel||'';
-  document.getElementById('np-alergias').value = p.alergias||'';
-  document.getElementById('np-enfermedades').value = p.enfermedades||'';
-  document.getElementById('np-medicamentos').value = p.medicamentos||'';
-  document.getElementById('np-grupo-sang').value = p.grupo_sang||'';
-  document.getElementById('np-antecedentes').value = p.antecedentes||'';
-  document.getElementById('np-motivo').value = p.motivo||'';
-  document.getElementById('np-diagnostico').value = p.diagnostico||'';
-  document.getElementById('np-tipo').value = p.tipo||'eventual';
-  document.getElementById('np-medico').value = p.medico_id||'';
-  document.getElementById('np-tratamiento').value = p.tratamiento||'';
-  document.getElementById('np-costo').value = p.costo_total||'';
-  document.getElementById('np-proxima-cita').value = p.proxima_cita||'';
-  document.getElementById('np-hora-cita').value = p.hora_cita||'';
-  toggleCostoNP();
+function editarPaciente(){
+  const p=getPac(_currentPacId);if(!p)return;
+  document.getElementById('pac-modal-title').textContent='Editar Paciente';
+  document.getElementById('btn-save-pac').textContent='Guardar cambios';
+  document.getElementById('btn-save-pac').onclick=guardarPaciente;
+  document.getElementById('np-edit-id').value=p.id;
+  document.getElementById('np-nombre').value=p.nombre||'';
+  document.getElementById('np-telefono').value=p.telefono||'';
+  document.getElementById('np-email').value=p.email||'';
+  document.getElementById('np-curp').value=p.curp||'';
+  document.getElementById('np-dir').value=p.direccion||'';
+  document.getElementById('np-emg').value=p.emergencia_nombre||'';
+  document.getElementById('np-emg-tel').value=p.emergencia_tel||'';
+  document.getElementById('np-alergias').value=p.alergias||'';
+  document.getElementById('np-enf').value=p.enfermedades||'';
+  document.getElementById('np-meds').value=p.medicamentos||'';
+  document.getElementById('np-gsang').value=p.grupo_sang||'';
+  document.getElementById('np-ant').value=p.antecedentes||'';
+  document.getElementById('np-motivo').value=p.motivo||'';
+  document.getElementById('np-diag').value=p.diagnostico||'';
+  document.getElementById('np-tipo').value=p.tipo||'eventual';
+  document.getElementById('np-medico').value=p.medico_id||'';
+  document.getElementById('np-trat').value=p.tratamiento||'';
+  document.getElementById('np-costo').value=p.costo_total||'';
+  document.getElementById('np-prox').value=p.proxima_cita||'';
+  document.getElementById('np-hora').value=p.hora_cita||'';
+  toggleTratamiento();
   closeModal('modal-detalle');
-  const btn = document.getElementById('btn-guardar-pac');
-  btn.textContent = 'Guardar cambios';
-  btn.onclick = () => actualizarPaciente(p.id);
   openModal('modal-nuevo-paciente');
-}
-
-async function actualizarPaciente(id) {
-  const btn = document.getElementById('btn-guardar-pac');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-  const payload = {
-    nombre: document.getElementById('np-nombre').value.trim(),
-    nacimiento: document.getElementById('np-nacimiento').value||null,
-    telefono: document.getElementById('np-telefono').value||null,
-    email: document.getElementById('np-email').value||null,
-    curp: document.getElementById('np-curp').value||null,
-    direccion: document.getElementById('np-direccion').value||null,
-    emergencia_nombre: document.getElementById('np-emergencia').value||null,
-    emergencia_tel: document.getElementById('np-emergencia-tel').value||null,
-    alergias: document.getElementById('np-alergias').value||null,
-    enfermedades: document.getElementById('np-enfermedades').value||null,
-    medicamentos: document.getElementById('np-medicamentos').value||null,
-    grupo_sang: document.getElementById('np-grupo-sang').value||null,
-    antecedentes: document.getElementById('np-antecedentes').value||null,
-    motivo: document.getElementById('np-motivo').value||null,
-    diagnostico: document.getElementById('np-diagnostico').value||null,
-    tipo: document.getElementById('np-tipo').value,
-    medico_id: document.getElementById('np-medico').value||null,
-    tratamiento: document.getElementById('np-tratamiento').value||null,
-    costo_total: parseFloat(document.getElementById('np-costo').value)||0,
-    proxima_cita: document.getElementById('np-proxima-cita').value||null,
-    hora_cita: document.getElementById('np-hora-cita').value||null,
-  };
-  const { error } = await sb.from('pacientes').update(payload).eq('id', id);
-  btn.disabled = false; btn.textContent = 'Registrar Paciente';
-  btn.onclick = guardarPaciente;
-  if (error) { showToast('Error: ' + error.message); return; }
-  Object.assign(_pacientes.find(p => p.id == id), payload);
-  closeModal('modal-nuevo-paciente');
-  renderPacientes();
-  showToast('Paciente actualizado');
-  verPaciente(id);
 }
 
 // ══════════════════════════════════════════════
 // CITAS
 // ══════════════════════════════════════════════
-function renderCitas() {
-  const fecha = document.getElementById('filtro-fecha-cita')?.value||'';
-  const cons  = document.getElementById('filtro-cons-cita')?.value||'';
-  const med   = document.getElementById('filtro-medico-cita')?.value||'';
-  const est   = document.getElementById('filtro-estado-cita')?.value||'';
-  let citas = [..._citas];
-  if (fecha) citas = citas.filter(c => c.fecha === fecha);
-  if (cons)  citas = citas.filter(c => c.consultorio_id === cons);
-  if (med)   citas = citas.filter(c => c.medico_id === med);
-  if (est)   citas = citas.filter(c => c.estado === est);
-  citas.sort((a,b) => b.fecha.localeCompare(a.fecha)||a.hora.localeCompare(b.hora));
-  const tbody = document.getElementById('tbl-citas');
-  if (!citas.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty">Sin citas</div></td></tr>`; return; }
-  const hoy = todayStr();
-  tbody.innerHTML = citas.map(c => {
-    const pac  = getPac(c.paciente_id);
-    const cons = getCons(c.consultorio_id);
-    const med  = getMed(c.medico_id);
-    const badge = { pendiente:'badge-yellow',confirmada:'badge-green',atendida:'badge-teal',cancelada:'badge-red' }[c.estado]||'badge-gray';
-    const esHoy = c.fecha === hoy;
-    return `<tr>
-      <td><strong style="color:${esHoy?'var(--purple)':'inherit'}">${formatDate(c.fecha)}</strong> ${c.hora?.substring(0,5)||''}</td>
+function renderCitas(){
+  const fecha=document.getElementById('filtro-fecha-cita')?.value||'';
+  const cons=document.getElementById('filtro-cons-cita')?.value||'';
+  const med=document.getElementById('filtro-med-cita')?.value||'';
+  const est=document.getElementById('filtro-est-cita')?.value||'';
+  let citas=[..._citas];
+  if(fecha)citas=citas.filter(c=>c.fecha===fecha);
+  if(cons)citas=citas.filter(c=>c.consultorio_id===cons);
+  if(med)citas=citas.filter(c=>c.medico_id===med);
+  if(est)citas=citas.filter(c=>c.estado===est);
+  citas.sort((a,b)=>b.fecha.localeCompare(a.fecha)||a.hora.localeCompare(b.hora));
+  const hoy=todayStr();
+  const tbody=document.getElementById('tbl-citas');
+  if(!citas.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty">Sin citas</div></td></tr>`;return;}
+  tbody.innerHTML=citas.map(c=>{
+    const pac=getPac(c.paciente_id),co=getCons(c.consultorio_id),md=getMed(c.medico_id);
+    const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br'}[c.estado]||'bgr';
+    const esHoy=c.fecha===hoy;
+    return`<tr>
+      <td><strong style="color:${esHoy?'var(--purple)':'inherit'}">${fmtDate(c.fecha)}</strong> ${c.hora?.substring(0,5)||''}</td>
       <td>${pac?.nombre||'—'}</td>
-      <td style="font-size:12px">${cons?.nombre||'—'}</td>
-      <td style="font-size:12px">${med?.nombre||'—'}</td>
-      <td><span class="badge badge-gray">${c.tipo}</span></td>
-      <td><span class="badge ${badge}">${c.estado}</span></td>
+      <td style="font-size:12px">${co?.nombre||'—'}</td>
+      <td style="font-size:12px">${md?.nombre||'—'}</td>
+      <td><span class="badge bgr">${c.tipo}</span></td>
+      <td><span class="badge ${bp}">${c.estado}</span></td>
       <td style="font-size:11px;color:var(--muted)">${c.creado_por_nombre||'—'}</td>
-      <td style="white-space:nowrap">
+      <td style="white-space:nowrap;display:flex;gap:4px">
         <button class="btn btn-ghost btn-sm" onclick="abrirEditarCita('${c.id}')">Editar</button>
         ${c.estado==='pendiente'?`<button class="btn btn-ghost btn-sm" onclick="confirmarCita('${c.id}')">Confirmar</button>`:''}
       </td>
@@ -1066,342 +1036,488 @@ function renderCitas() {
   }).join('');
 }
 
-function abrirNuevaCita(pacId) {
-  document.getElementById('cita-edit-id').value = '';
-  document.getElementById('cita-modal-title').textContent = 'Nueva Cita';
-  document.getElementById('btn-guardar-cita').textContent = 'Agendar Cita';
-  document.getElementById('cita-paciente-id').value = pacId||'';
-  document.getElementById('cita-fecha').value = todayStr();
-  document.getElementById('cita-hora').value = '09:00';
-  document.getElementById('cita-notas').value = '';
-  document.getElementById('motivo-cambio-wrap').style.display = 'none';
-  openModal('modal-nueva-cita');
+function abrirNuevaCita(pacId){
+  document.getElementById('cita-edit-id').value='';
+  document.getElementById('cita-title').textContent='Nueva Cita';
+  document.getElementById('btn-save-cita').textContent='Agendar Cita';
+  document.getElementById('cita-pac-id').value=pacId||'';
+  document.getElementById('cita-cons-id').value='';
+  document.getElementById('cita-med-id').innerHTML='<option value="">— Seleccionar médico —</option>'+_meds.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('');
+  document.getElementById('cita-fecha').value=todayStr();
+  document.getElementById('cita-hora').value='09:00';
+  document.getElementById('cita-notas').value='';
+  document.getElementById('cita-dur').value='60';
+  document.getElementById('motivo-wrap').style.display='none';
+  document.getElementById('alerta-horario').style.display='none';
+  openModal('modal-cita');
 }
 
-function abrirEditarCita(id) {
-  const c = _citas.find(x => x.id == id);
-  if (!c) return;
-  document.getElementById('cita-edit-id').value = c.id;
-  document.getElementById('cita-modal-title').textContent = 'Editar Cita';
-  document.getElementById('btn-guardar-cita').textContent = 'Guardar cambios';
-  document.getElementById('cita-paciente-id').value = c.paciente_id||'';
-  document.getElementById('cita-consultorio-id').value = c.consultorio_id||'';
-  document.getElementById('cita-medico-id').value = c.medico_id||'';
-  document.getElementById('cita-fecha').value = c.fecha||'';
-  document.getElementById('cita-hora').value = c.hora?.substring(0,5)||'';
-  document.getElementById('cita-tipo').value = c.tipo||'consulta';
-  document.getElementById('cita-duracion').value = c.duracion||60;
-  document.getElementById('cita-notas').value = c.notas||'';
-  document.getElementById('motivo-cambio-wrap').style.display = '';
-  document.getElementById('cita-motivo-cambio').value = '';
-  openModal('modal-nueva-cita');
+function abrirEditarCita(id){
+  const c=_citas.find(x=>x.id==id);if(!c)return;
+  document.getElementById('cita-edit-id').value=c.id;
+  document.getElementById('cita-title').textContent='Editar Cita';
+  document.getElementById('btn-save-cita').textContent='Guardar cambios';
+  document.getElementById('cita-pac-id').value=c.paciente_id||'';
+  document.getElementById('cita-cons-id').value=c.consultorio_id||'';
+  onConsultorioCitaChange();
+  setTimeout(()=>{document.getElementById('cita-med-id').value=c.medico_id||'';},50);
+  document.getElementById('cita-fecha').value=c.fecha||'';
+  document.getElementById('cita-hora').value=c.hora?.substring(0,5)||'';
+  document.getElementById('cita-tipo').value=c.tipo||'consulta';
+  document.getElementById('cita-dur').value=c.duracion||60;
+  document.getElementById('cita-notas').value=c.notas||'';
+  document.getElementById('motivo-wrap').style.display='';
+  document.getElementById('cita-motivo').value='';
+  document.getElementById('alerta-horario').style.display='none';
+  openModal('modal-cita');
 }
 
-async function guardarCita() {
-  const editId = document.getElementById('cita-edit-id').value;
-  const pacId  = document.getElementById('cita-paciente-id').value;
-  const medId  = document.getElementById('cita-medico-id').value;
-  const fecha  = document.getElementById('cita-fecha').value;
-  if (!pacId) return showToast('Selecciona un paciente');
-  if (!fecha) return showToast('Ingresa la fecha');
-  if (!medId) return showToast('Selecciona un médico');
+function validarHorarioCita(){
+  const medId=document.getElementById('cita-med-id').value;
+  const consId=document.getElementById('cita-cons-id').value;
+  const fecha=document.getElementById('cita-fecha').value;
+  const hora=document.getElementById('cita-hora').value;
+  const alertEl=document.getElementById('alerta-horario');
+  const msgEl=document.getElementById('alerta-horario-msg');
+  if(!medId||!consId||!fecha||!hora){alertEl.style.display='none';return;}
+  const diaSemana=new Date(fecha+'T12:00:00').getDay();
+  const horario=_horarios.find(h=>h.medico_id===medId&&h.consultorio_id===consId&&parseInt(h.dia_semana)===diaSemana);
+  if(!horario){
+    const med=getMed(medId),cons=getCons(consId);
+    msgEl.textContent=`${med?.nombre||'El médico'} no tiene horario configurado en ${cons?.nombre||'ese consultorio'} los ${DIAS_FULL[diaSemana]}. La cita se agendará de todas formas si confirmas.`;
+    alertEl.style.display='';return;
+  }
+  if(hora<horario.hora_inicio||hora>horario.hora_fin){
+    const med=getMed(medId);
+    msgEl.textContent=`${med?.nombre||'El médico'} atiende de ${horario.hora_inicio.substring(0,5)} a ${horario.hora_fin.substring(0,5)} los ${DIAS_FULL[diaSemana]}. La cita se agendará de todas formas si confirmas.`;
+    alertEl.style.display='';return;
+  }
+  alertEl.style.display='none';
+}
 
-  const btn = document.getElementById('btn-guardar-cita');
-  btn.disabled = true; btn.textContent = 'Guardando...';
+async function guardarCita(){
+  const editId=document.getElementById('cita-edit-id').value;
+  const pacId=document.getElementById('cita-pac-id').value;
+  const medId=document.getElementById('cita-med-id').value;
+  const fecha=document.getElementById('cita-fecha').value;
+  if(!pacId)return showToast('Selecciona un paciente',false);
+  if(!fecha)return showToast('Ingresa la fecha',false);
+  if(!medId)return showToast('Selecciona un médico',false);
 
-  const payload = {
-    clinica_id: CLINICA_ID,
-    paciente_id: pacId,
-    consultorio_id: document.getElementById('cita-consultorio-id').value||null,
-    medico_id: medId,
-    fecha,
-    hora: document.getElementById('cita-hora').value||'09:00',
-    tipo: document.getElementById('cita-tipo').value,
-    duracion: parseInt(document.getElementById('cita-duracion').value)||60,
-    notas: document.getElementById('cita-notas').value||null,
-    estado: 'pendiente',
-    creado_por: USER_ID,
-    creado_por_nombre: document.getElementById('user-nombre').textContent,
+  const btn=document.getElementById('btn-save-cita');
+  btn.disabled=true;btn.textContent='Guardando...';
+  const payload={
+    clinica_id:CLINICA_ID,paciente_id:pacId,
+    consultorio_id:document.getElementById('cita-cons-id').value||null,
+    medico_id:medId,fecha,
+    hora:document.getElementById('cita-hora').value||'09:00',
+    tipo:document.getElementById('cita-tipo').value,
+    duracion:parseInt(document.getElementById('cita-dur').value)||60,
+    notas:document.getElementById('cita-notas').value||null,
+    estado:'pendiente',creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
   };
-
-  if (editId) {
-    // Guardar historial
-    const anterior = _citas.find(c => c.id == editId);
-    if (anterior) {
-      await sb.from('citas_historial').insert({
-        cita_id: editId, clinica_id: CLINICA_ID,
-        snapshot: anterior,
-        motivo: document.getElementById('cita-motivo-cambio').value||'',
-        cambiado_por: USER_ID,
-      });
-    }
-    const { error } = await sb.from('citas').update(payload).eq('id', editId);
-    btn.disabled = false; btn.textContent = 'Guardar cambios';
-    if (error) { showToast('Error: ' + error.message); return; }
-    const idx = _citas.findIndex(c => c.id == editId);
-    if (idx >= 0) _citas[idx] = { ..._citas[idx], ...payload, id: editId };
+  if(editId){
+    const ant=_citas.find(c=>c.id==editId);
+    if(ant)await sb.from('citas_historial').insert({cita_id:editId,clinica_id:CLINICA_ID,snapshot:ant,motivo:document.getElementById('cita-motivo').value||'',cambiado_por:USER_ID});
+    const{error}=await sb.from('citas').update(payload).eq('id',editId);
+    btn.disabled=false;btn.textContent='Guardar cambios';
+    if(error){showToast('Error: '+error.message,false);return;}
+    const idx=_citas.findIndex(c=>c.id==editId);
+    if(idx>=0)_citas[idx]={..._citas[idx],...payload,id:editId};
     showToast('Cita actualizada');
   } else {
-    const { data, error } = await sb.from('citas').insert(payload).select().single();
-    btn.disabled = false; btn.textContent = 'Agendar Cita';
-    if (error) { showToast('Error: ' + error.message); return; }
-    _citas.push(data);
-    showToast('Cita agendada');
+    const{data,error}=await sb.from('citas').insert(payload).select().single();
+    btn.disabled=false;btn.textContent='Agendar Cita';
+    if(error){showToast('Error: '+error.message,false);return;}
+    _citas.push(data);showToast('Cita agendada');
   }
-  closeModal('modal-nueva-cita');
-  renderCitas();
-  cargarCitasDia();
-  renderKPIs();
+  closeModal('modal-cita');renderCitas();cargarCitasDia();renderKPIs();
 }
 
-async function confirmarCita(id) {
-  const { error } = await sb.from('citas').update({ estado:'confirmada' }).eq('id', id);
-  if (error) { showToast('Error: ' + error.message); return; }
-  const c = _citas.find(x => x.id == id);
-  if (c) c.estado = 'confirmada';
-  renderCitas();
-  cargarCitasDia();
-  renderKPIs();
-  showToast('Cita confirmada');
+async function confirmarCita(id){
+  const{error}=await sb.from('citas').update({estado:'confirmada'}).eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  const c=_citas.find(x=>x.id==id);if(c)c.estado='confirmada';
+  renderCitas();cargarCitasDia();renderKPIs();showToast('Cita confirmada');
 }
 
 // ══════════════════════════════════════════════
 // INGRESOS Y EGRESOS
 // ══════════════════════════════════════════════
-function renderMovimientos() {
-  const desde = document.getElementById('filtro-desde-ing')?.value||'';
-  const hasta = document.getElementById('filtro-hasta-ing')?.value||'';
-  const cons  = document.getElementById('filtro-cons-ing')?.value||'';
-  let movs = [..._pagos];
-  if (desde) movs = movs.filter(m => m.fecha >= desde);
-  if (hasta) movs = movs.filter(m => m.fecha <= hasta);
-  if (cons)  movs = movs.filter(m => m.consultorio_id === cons);
-
-  const hoy = new Date();
-  const mesStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
-  const mesMov = movs.filter(m => m.fecha?.startsWith(mesStr));
-  const ingMes = mesMov.filter(m => m.tipo !== 'egreso').reduce((s,m) => s+Number(m.monto),0);
-  const egrMes = mesMov.filter(m => m.tipo === 'egreso').reduce((s,m) => s+Number(m.monto),0);
-  document.getElementById('ing-total-mes').textContent = formatMoney(ingMes);
-  document.getElementById('egr-total-mes').textContent = formatMoney(egrMes);
-  const bal = ingMes - egrMes;
-  const balEl = document.getElementById('balance-mes');
-  balEl.textContent = formatMoney(bal);
-  balEl.style.color = bal >= 0 ? 'var(--green)' : 'var(--red)';
-
-  const el = document.getElementById('lista-movimientos');
-  if (!movs.length) { el.innerHTML = '<div class="empty">Sin movimientos</div>'; return; }
-  el.innerHTML = movs.map(m => {
-    const pac = getPac(m.paciente_id);
-    const cons = getCons(m.consultorio_id);
-    const esEgreso = m.tipo === 'egreso';
-    return `<div class="mov-item">
+function renderMovimientos(){
+  const desde=document.getElementById('ing-desde')?.value||'';
+  const hasta=document.getElementById('ing-hasta')?.value||'';
+  const cons=document.getElementById('filtro-cons-ing')?.value||'';
+  let movs=[..._pagos];
+  if(desde)movs=movs.filter(m=>m.fecha>=desde);
+  if(hasta)movs=movs.filter(m=>m.fecha<=hasta);
+  if(cons)movs=movs.filter(m=>m.consultorio_id===cons);
+  const mes=new Date().toISOString().substring(0,7);
+  const mm=movs.filter(m=>m.fecha?.startsWith(mes));
+  const ing=mm.filter(m=>m.tipo!=='egreso').reduce((s,m)=>s+Number(m.monto),0);
+  const egr=mm.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+Number(m.monto),0);
+  const bal=ing-egr;
+  document.getElementById('ing-mes').textContent=fmtMoney(ing);
+  document.getElementById('egr-mes').textContent=fmtMoney(egr);
+  const balEl=document.getElementById('bal-mes');
+  balEl.textContent=fmtMoney(bal);
+  balEl.style.color=bal>=0?'var(--green)':'var(--red)';
+  const el=document.getElementById('lista-movs');
+  if(!movs.length){el.innerHTML='<div class="empty">Sin movimientos registrados</div>';return;}
+  el.innerHTML=movs.map(m=>{
+    const pac=getPac(m.paciente_id),co=getCons(m.consultorio_id);
+    const esEgr=m.tipo==='egreso';
+    return`<div class="mov-item">
       <div>
-        <div class="mov-desc">${m.concepto||m.tipo||'—'}</div>
-        <div class="mov-meta">${formatDate(m.fecha)} · ${m.forma_pago||'—'} · ${cons?.nombre||'General'}</div>
+        <div class="mov-desc">${m.concepto||m.servicio||m.tipo||'—'}</div>
+        <div class="mov-meta">${fmtDate(m.fecha)} · ${m.forma_pago||'—'} · ${co?.nombre||'General'}</div>
         ${pac?`<div class="mov-meta">Paciente: ${pac.nombre}</div>`:''}
-        <div class="audit-line">${m.creado_por_nombre||'—'}</div>
+        <div class="mov-meta">Registró: ${m.creado_por_nombre||'—'}</div>
       </div>
-      <div class="mov-amount ${esEgreso?'egreso':'ingreso'}">${esEgreso?'−':'+'} ${formatMoney(m.monto)}</div>
+      <div class="mov-amt ${esEgr?'egr':'ing'}">${esEgr?'−':'+'} ${fmtMoney(m.monto)}</div>
     </div>`;
   }).join('');
 }
 
-async function guardarIngreso() {
-  const monto = parseFloat(document.getElementById('ing-monto').value);
-  if (!monto || monto <= 0) return showToast('Ingresa un monto válido');
-  const { data, error } = await sb.from('pagos').insert({
-    clinica_id: CLINICA_ID,
-    paciente_id: document.getElementById('ing-paciente-id').value||null,
-    consultorio_id: document.getElementById('ing-consultorio-id').value||null,
-    tipo: document.getElementById('ing-tipo').value,
-    monto,
-    forma_pago: document.getElementById('ing-forma').value,
-    concepto: document.getElementById('ing-concepto').value||null,
-    fecha: document.getElementById('ing-fecha').value||todayStr(),
-    notas: document.getElementById('ing-notas').value||null,
-    creado_por: USER_ID,
-    creado_por_nombre: document.getElementById('user-nombre').textContent,
+async function guardarIngreso(){
+  const monto=parseFloat(document.getElementById('ing-monto').value);
+  if(!monto||monto<=0)return showToast('Ingresa un monto válido',false);
+  const{data,error}=await sb.from('pagos').insert({
+    clinica_id:CLINICA_ID,
+    paciente_id:document.getElementById('ing-pac').value||null,
+    consultorio_id:document.getElementById('ing-cons').value||null,
+    tipo:document.getElementById('ing-tipo').value,monto,
+    forma_pago:document.getElementById('ing-forma').value,
+    concepto:document.getElementById('ing-concepto').value||null,
+    fecha:document.getElementById('ing-fecha').value||todayStr(),
+    notas:document.getElementById('ing-notas').value||null,
+    creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
   }).select().single();
-  if (error) { showToast('Error: ' + error.message); return; }
-  _pagos.unshift(data);
-  closeModal('modal-nuevo-ingreso');
-  renderMovimientos();
-  showToast('Ingreso registrado');
+  if(error){showToast('Error: '+error.message,false);return;}
+  _pagos.unshift(data);closeModal('modal-nuevo-ingreso');renderMovimientos();showToast('Ingreso registrado');
 }
 
-async function guardarEgreso() {
-  const monto = parseFloat(document.getElementById('egr-monto').value);
-  if (!monto || monto <= 0) return showToast('Ingresa un monto válido');
-  const { data, error } = await sb.from('pagos').insert({
-    clinica_id: CLINICA_ID,
-    consultorio_id: document.getElementById('egr-consultorio-id').value||null,
-    tipo: 'egreso',
-    monto,
-    forma_pago: document.getElementById('egr-forma').value,
-    concepto: document.getElementById('egr-concepto').value||null,
-    servicio: document.getElementById('egr-categoria').value,
-    fecha: document.getElementById('egr-fecha').value||todayStr(),
-    notas: document.getElementById('egr-notas').value||null,
-    creado_por: USER_ID,
-    creado_por_nombre: document.getElementById('user-nombre').textContent,
+async function guardarEgreso(){
+  const monto=parseFloat(document.getElementById('egr-monto').value);
+  if(!monto||monto<=0)return showToast('Ingresa un monto válido',false);
+  const{data,error}=await sb.from('pagos').insert({
+    clinica_id:CLINICA_ID,
+    consultorio_id:document.getElementById('egr-cons').value||null,
+    tipo:'egreso',monto,
+    forma_pago:document.getElementById('egr-forma').value,
+    servicio:document.getElementById('egr-cat').value,
+    concepto:document.getElementById('egr-concepto').value||null,
+    fecha:document.getElementById('egr-fecha').value||todayStr(),
+    notas:document.getElementById('egr-notas').value||null,
+    creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
   }).select().single();
-  if (error) { showToast('Error: ' + error.message); return; }
-  _pagos.unshift(data);
-  closeModal('modal-nuevo-egreso');
-  renderMovimientos();
-  showToast('Egreso registrado');
+  if(error){showToast('Error: '+error.message,false);return;}
+  _pagos.unshift(data);closeModal('modal-nuevo-egreso');renderMovimientos();showToast('Egreso registrado');
 }
 
-function abrirAbono(pacId, tipo) {
-  _currentPacId = pacId;
-  const p = getPac(pacId);
-  document.getElementById('abono-titulo').textContent = tipo === 'tratamiento' ? 'Registrar Abono' : 'Pago por Visita';
-  document.getElementById('abono-pac-id').value = pacId;
-  document.getElementById('abono-monto').value = '';
-  document.getElementById('abono-concepto').value = tipo === 'tratamiento' ? `Abono — ${p?.tratamiento||'Tratamiento'}` : 'Consulta / Visita';
-  document.getElementById('abono-fecha').value = todayStr();
-  document.getElementById('abono-notas').value = '';
-  closeModal('modal-detalle');
-  openModal('modal-abono');
+function abrirAbono(pacId,tipo){
+  _currentPacId=pacId;
+  const p=getPac(pacId);
+  document.getElementById('abo-title').textContent=tipo==='tratamiento'?'Registrar Abono':'Pago por Visita';
+  document.getElementById('abo-pac-id').value=pacId;
+  document.getElementById('abo-tipo-pac').value=tipo;
+  document.getElementById('abo-monto').value='';
+  document.getElementById('abo-concepto').value=tipo==='tratamiento'?`Abono — ${p?.tratamiento||'Tratamiento'}`:'Consulta / Visita';
+  document.getElementById('abo-fecha').value=todayStr();
+  document.getElementById('abo-notas').value='';
+  closeModal('modal-detalle');openModal('modal-abono');
 }
 
-async function guardarAbono() {
-  const monto = parseFloat(document.getElementById('abono-monto').value);
-  if (!monto || monto <= 0) return showToast('Ingresa un monto válido');
-  const pacId = document.getElementById('abono-pac-id').value;
-  const { data, error } = await sb.from('pagos').insert({
-    clinica_id: CLINICA_ID,
-    paciente_id: pacId,
-    tipo: 'abono',
-    monto,
-    forma_pago: document.getElementById('abono-forma').value,
-    concepto: document.getElementById('abono-concepto').value||null,
-    fecha: document.getElementById('abono-fecha').value||todayStr(),
-    notas: document.getElementById('abono-notas').value||null,
-    creado_por: USER_ID,
-    creado_por_nombre: document.getElementById('user-nombre').textContent,
+async function guardarAbono(){
+  const monto=parseFloat(document.getElementById('abo-monto').value);
+  if(!monto||monto<=0)return showToast('Ingresa un monto válido',false);
+  const pacId=document.getElementById('abo-pac-id').value;
+  const{data,error}=await sb.from('pagos').insert({
+    clinica_id:CLINICA_ID,paciente_id:pacId,tipo:'abono',monto,
+    forma_pago:document.getElementById('abo-forma').value,
+    concepto:document.getElementById('abo-concepto').value||null,
+    fecha:document.getElementById('abo-fecha').value||todayStr(),
+    notas:document.getElementById('abo-notas').value||null,
+    creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
   }).select().single();
-  if (error) { showToast('Error: ' + error.message); return; }
-  _pagos.unshift(data);
-  closeModal('modal-abono');
-  renderMovimientos();
-  showToast('Pago registrado');
+  if(error){showToast('Error: '+error.message,false);return;}
+  _pagos.unshift(data);closeModal('modal-abono');renderMovimientos();showToast('Pago registrado');
   verPaciente(pacId);
 }
 
 // ══════════════════════════════════════════════
 // CONSULTORIOS
 // ══════════════════════════════════════════════
-function renderConsultorios() {
-  const tbody = document.getElementById('tbl-consultorios');
-  if (!_consultorios.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty">Sin consultorios registrados. Agrega el primero.</div></td></tr>`; return; }
-  tbody.innerHTML = _consultorios.map(c => `<tr>
+function renderConsultorios(){
+  const tbody=document.getElementById('tbl-cons');
+  if(!_cons.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty">Sin consultorios registrados. Agrega el primero para comenzar.</div></td></tr>`;return;}
+  tbody.innerHTML=_cons.map(c=>`<tr>
     <td><strong>${c.nombre}</strong></td>
     <td style="font-size:12px">${c.direccion||'—'}</td>
     <td>${c.telefono||'—'}</td>
-    <td><span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${c.color||'#888'}"></span></td>
-    <td><button class="btn btn-danger btn-sm" onclick="eliminarConsultorio('${c.id}')">Eliminar</button></td>
+    <td><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:${c.color||'#888'};display:inline-block"></span>${c.color||'—'}</span></td>
+    <td style="white-space:nowrap;display:flex;gap:4px">
+      <button class="btn btn-ghost btn-sm" onclick="editarConsultorio('${c.id}')">Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="eliminarConsultorio('${c.id}')">Eliminar</button>
+    </td>
   </tr>`).join('');
 }
 
-async function guardarConsultorio() {
-  const nombre = document.getElementById('cons-nombre').value.trim();
-  if (!nombre) return showToast('El nombre es obligatorio');
-  const { data, error } = await sb.from('consultorios').insert({
-    clinica_id: CLINICA_ID,
-    nombre,
-    direccion: document.getElementById('cons-dir').value||null,
-    telefono: document.getElementById('cons-tel').value||null,
-    color: document.getElementById('cons-color').value,
-  }).select().single();
-  if (error) { showToast('Error: ' + error.message); return; }
-  _consultorios.push(data);
-  closeModal('modal-nuevo-consultorio');
-  renderConsultorios();
-  poblateSelects();
-  showToast('Consultorio agregado');
+function abrirModalConsultorio(id){
+  document.getElementById('cons-edit-id').value=id||'';
+  if(id){
+    const c=getCons(id);
+    document.getElementById('cons-modal-title').textContent='Editar Consultorio';
+    document.getElementById('cons-nombre').value=c?.nombre||'';
+    document.getElementById('cons-dir').value=c?.direccion||'';
+    document.getElementById('cons-tel').value=c?.telefono||'';
+    document.getElementById('cons-color').value=c?.color||'#3BBFBF';
+  } else {
+    document.getElementById('cons-modal-title').textContent='Nuevo Consultorio';
+    ['cons-nombre','cons-dir','cons-tel'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('cons-color').value='#3BBFBF';
+  }
+  openModal('modal-consultorio');
 }
 
-async function eliminarConsultorio(id) {
-  if (!confirm('¿Eliminar este consultorio?')) return;
-  const { error } = await sb.from('consultorios').delete().eq('id', id);
-  if (error) { showToast('Error: ' + error.message); return; }
-  _consultorios = _consultorios.filter(c => c.id !== id);
-  renderConsultorios();
-  poblateSelects();
-  showToast('Consultorio eliminado');
+function editarConsultorio(id){abrirModalConsultorio(id);}
+
+async function guardarConsultorio(){
+  const nombre=document.getElementById('cons-nombre').value.trim();
+  if(!nombre)return showToast('El nombre es obligatorio',false);
+  const editId=document.getElementById('cons-edit-id').value;
+  const payload={
+    clinica_id:CLINICA_ID,nombre,
+    direccion:document.getElementById('cons-dir').value||null,
+    telefono:document.getElementById('cons-tel').value||null,
+    color:document.getElementById('cons-color').value,
+  };
+  if(editId){
+    const{error}=await sb.from('consultorios').update(payload).eq('id',editId);
+    if(error){showToast('Error: '+error.message,false);return;}
+    const idx=_cons.findIndex(c=>c.id==editId);
+    if(idx>=0)_cons[idx]={..._cons[idx],...payload};
+    showToast('Consultorio actualizado');
+  } else {
+    const{data,error}=await sb.from('consultorios').insert(payload).select().single();
+    if(error){showToast('Error: '+error.message,false);return;}
+    _cons.push(data);showToast('Consultorio agregado');
+  }
+  closeModal('modal-consultorio');renderConsultorios();poblarSelects();
+}
+
+async function eliminarConsultorio(id){
+  if(!confirm('¿Eliminar este consultorio? Esta acción no se puede deshacer.'))return;
+  const{error}=await sb.from('consultorios').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  _cons=_cons.filter(c=>c.id!==id);renderConsultorios();poblarSelects();showToast('Consultorio eliminado');
 }
 
 // ══════════════════════════════════════════════
 // MÉDICOS
 // ══════════════════════════════════════════════
-function renderMedicos() {
-  const tbody = document.getElementById('tbl-medicos');
-  if (!_medicos.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty">Sin médicos registrados. Agrega el primero.</div></td></tr>`; return; }
-  tbody.innerHTML = _medicos.map(m => {
-    const cons = (m.consultorios_ids||[]).map(id => getCons(id)?.nombre||id).join(', ') || '—';
-    return `<tr>
-      <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${m.color||'#888'};margin-right:8px"></span><strong>${m.nombre}</strong></td>
+function renderMedicos(){
+  const tbody=document.getElementById('tbl-meds');
+  if(!_meds.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty">Sin médicos registrados. Primero crea los consultorios, luego agrega los médicos.</div></td></tr>`;return;}
+  tbody.innerHTML=_meds.map(m=>{
+    const consNombres=(m.consultorios_ids||[]).map(cid=>getCons(cid)?.nombre||cid).filter(Boolean).join(', ')||'—';
+    return`<tr>
+      <td><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:${m.color||'#888'}"></span><strong>${m.nombre}</strong></span></td>
       <td>${m.especialidad||'—'}</td>
-      <td style="font-size:12px">${cons}</td>
-      <td><span class="badge badge-green">Activo</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="eliminarMedico('${m.id}')">Eliminar</button></td>
+      <td style="font-size:12px">${consNombres}</td>
+      <td><span class="badge ${m.activo?'bg':'bgr'}">${m.activo?'Activo':'Inactivo'}</span></td>
+      <td style="white-space:nowrap;display:flex;gap:4px">
+        <button class="btn btn-ghost btn-sm" onclick="editarMedico('${m.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarMedico('${m.id}')">Eliminar</button>
+      </td>
     </tr>`;
   }).join('');
 }
 
-async function guardarMedico() {
-  const nombre = document.getElementById('med-nombre').value.trim();
-  if (!nombre) return showToast('El nombre es obligatorio');
-  const checks = document.querySelectorAll('#med-consultorios-check input[type=checkbox]:checked');
-  const consIds = Array.from(checks).map(c => c.value);
-  const { data, error } = await sb.from('medicos').insert({
-    clinica_id: CLINICA_ID,
-    nombre,
-    especialidad: document.getElementById('med-especialidad').value||null,
-    telefono: document.getElementById('med-tel').value||null,
-    email: document.getElementById('med-email').value||null,
-    color: document.getElementById('med-color').value,
-    consultorios_ids: consIds,
-    activo: true,
-  }).select().single();
-  if (error) { showToast('Error: ' + error.message); return; }
-  _medicos.push(data);
-  closeModal('modal-nuevo-medico');
-  renderMedicos();
-  poblateSelects();
-  showToast('Médico agregado');
+function abrirModalMedico(id){
+  document.getElementById('med-edit-id').value=id||'';
+  if(id){
+    const m=getMed(id);
+    document.getElementById('med-modal-title').textContent='Editar Médico';
+    document.getElementById('med-nombre').value=m?.nombre||'';
+    document.getElementById('med-esp').value=m?.especialidad||'';
+    document.getElementById('med-tel').value=m?.telefono||'';
+    document.getElementById('med-email').value=m?.email||'';
+    document.getElementById('med-color').value=m?.color||'#7B52CC';
+    actualizarChecksMedCons(m?.consultorios_ids||[]);
+  } else {
+    document.getElementById('med-modal-title').textContent='Agregar Médico';
+    ['med-nombre','med-esp','med-tel','med-email'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('med-color').value='#7B52CC';
+    actualizarChecksMedCons([]);
+  }
+  openModal('modal-medico');
 }
 
-async function eliminarMedico(id) {
-  if (!confirm('¿Eliminar este médico?')) return;
-  const { error } = await sb.from('medicos').delete().eq('id', id);
-  if (error) { showToast('Error: ' + error.message); return; }
-  _medicos = _medicos.filter(m => m.id !== id);
-  renderMedicos();
-  poblateSelects();
-  showToast('Médico eliminado');
+function editarMedico(id){abrirModalMedico(id);}
+
+async function guardarMedico(){
+  const nombre=document.getElementById('med-nombre').value.trim();
+  if(!nombre)return showToast('El nombre es obligatorio',false);
+  const editId=document.getElementById('med-edit-id').value;
+  const checks=document.querySelectorAll('#med-cons-checks input[type=checkbox]:checked');
+  const consIds=Array.from(checks).map(c=>c.value);
+  const payload={
+    clinica_id:CLINICA_ID,nombre,
+    especialidad:document.getElementById('med-esp').value||null,
+    telefono:document.getElementById('med-tel').value||null,
+    email:document.getElementById('med-email').value||null,
+    color:document.getElementById('med-color').value,
+    consultorios_ids:consIds,activo:true,
+  };
+  if(editId){
+    const{error}=await sb.from('medicos').update(payload).eq('id',editId);
+    if(error){showToast('Error: '+error.message,false);return;}
+    const idx=_meds.findIndex(m=>m.id==editId);
+    if(idx>=0)_meds[idx]={..._meds[idx],...payload};
+    showToast('Médico actualizado');
+  } else {
+    const{data,error}=await sb.from('medicos').insert(payload).select().single();
+    if(error){showToast('Error: '+error.message,false);return;}
+    _meds.push(data);showToast('Médico agregado');
+  }
+  closeModal('modal-medico');renderMedicos();poblarSelects();
+}
+
+async function eliminarMedico(id){
+  if(!confirm('¿Eliminar este médico?'))return;
+  const{error}=await sb.from('medicos').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  _meds=_meds.filter(m=>m.id!==id);renderMedicos();poblarSelects();showToast('Médico eliminado');
+}
+
+// ══════════════════════════════════════════════
+// HORARIOS
+// ══════════════════════════════════════════════
+function renderHorarios(){
+  const tbody=document.getElementById('tbl-horarios');
+  if(!_horarios.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty">Sin horarios configurados. Agrega los horarios de cada médico por consultorio.</div></td></tr>`;return;}
+  const sorted=[..._horarios].sort((a,b)=>{
+    const ma=getMed(a.medico_id)?.nombre||'';
+    const mb=getMed(b.medico_id)?.nombre||'';
+    return ma.localeCompare(mb)||parseInt(a.dia_semana)-parseInt(b.dia_semana);
+  });
+  tbody.innerHTML=sorted.map(h=>{
+    const med=getMed(h.medico_id),cons=getCons(h.consultorio_id);
+    return`<tr>
+      <td><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:50%;background:${med?.color||'#888'}"></span>${med?.nombre||'—'}</span></td>
+      <td style="font-size:12px">${cons?.nombre||'—'}</td>
+      <td><span class="badge bt">${DIAS_FULL[parseInt(h.dia_semana)]}</span></td>
+      <td>${h.hora_inicio?.substring(0,5)||'—'} — ${h.hora_fin?.substring(0,5)||'—'}</td>
+      <td><span class="badge ${h.activo?'bg':'bgr'}">${h.activo?'Activo':'Inactivo'}</span></td>
+      <td style="white-space:nowrap;display:flex;gap:4px">
+        <button class="btn btn-ghost btn-sm" onclick="toggleHorario('${h.id}',${h.activo})">${h.activo?'Desactivar':'Activar'}</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarHorario('${h.id}')">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirModalHorario(){
+  document.getElementById('hor-edit-id').value='';
+  document.getElementById('hor-modal-title').textContent='Agregar Horario';
+  document.getElementById('hor-med-id').value='';
+  document.getElementById('hor-cons-id').innerHTML='<option value="">— Seleccionar —</option>';
+  document.getElementById('hor-dia').value='1';
+  document.getElementById('hor-inicio').value='09:00';
+  document.getElementById('hor-fin').value='14:00';
+  openModal('modal-horario');
+}
+
+async function guardarHorario(){
+  const medId=document.getElementById('hor-med-id').value;
+  const consId=document.getElementById('hor-cons-id').value;
+  const dia=document.getElementById('hor-dia').value;
+  const inicio=document.getElementById('hor-inicio').value;
+  const fin=document.getElementById('hor-fin').value;
+  if(!medId)return showToast('Selecciona un médico',false);
+  if(!consId)return showToast('Selecciona un consultorio',false);
+  if(!inicio||!fin)return showToast('Ingresa el horario',false);
+  if(inicio>=fin)return showToast('La hora de fin debe ser mayor a la de inicio',false);
+
+  const{data,error}=await sb.from('horarios').upsert({
+    clinica_id:CLINICA_ID,medico_id:medId,consultorio_id:consId,
+    dia_semana:parseInt(dia),hora_inicio:inicio,hora_fin:fin,activo:true,
+  },{onConflict:'medico_id,consultorio_id,dia_semana'}).select().single();
+  if(error){showToast('Error: '+error.message,false);return;}
+  const idx=_horarios.findIndex(h=>h.medico_id===medId&&h.consultorio_id===consId&&parseInt(h.dia_semana)===parseInt(dia));
+  if(idx>=0)_horarios[idx]=data;else _horarios.push(data);
+  closeModal('modal-horario');renderHorarios();showToast('Horario guardado');
+}
+
+async function toggleHorario(id,activo){
+  const{error}=await sb.from('horarios').update({activo:!activo}).eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  const h=_horarios.find(x=>x.id==id);if(h)h.activo=!activo;
+  renderHorarios();showToast(activo?'Horario desactivado':'Horario activado');
+}
+
+async function eliminarHorario(id){
+  if(!confirm('¿Eliminar este horario?'))return;
+  const{error}=await sb.from('horarios').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  _horarios=_horarios.filter(h=>h.id!==id);renderHorarios();showToast('Horario eliminado');
+}
+
+// ══════════════════════════════════════════════
+// MI CLÍNICA
+// ══════════════════════════════════════════════
+function cargarDatosClinica(){
+  if(!_clinicaData)return;
+  document.getElementById('cl-nombre').value=_clinicaData.nombre||'';
+  document.getElementById('cl-nombre-comercial').value=_clinicaData.nombre_comercial||'';
+  document.getElementById('cl-razon').value=_clinicaData.razon_social||'';
+  document.getElementById('cl-rfc').value=_clinicaData.rfc||'';
+  document.getElementById('cl-tel').value=_clinicaData.telefono||'';
+  document.getElementById('cl-email').value=_clinicaData.email||'';
+  document.getElementById('cl-dir').value=_clinicaData.direccion||'';
+  document.getElementById('cl-responsable').value=_clinicaData.responsable||'';
+}
+
+async function guardarClinica(){
+  const nombre=document.getElementById('cl-nombre').value.trim();
+  if(!nombre)return showToast('El nombre es obligatorio',false);
+  const payload={
+    nombre,
+    nombre_comercial:document.getElementById('cl-nombre-comercial').value||null,
+    razon_social:document.getElementById('cl-razon').value||null,
+    rfc:document.getElementById('cl-rfc').value||null,
+    telefono:document.getElementById('cl-tel').value||null,
+    email:document.getElementById('cl-email').value||null,
+    direccion:document.getElementById('cl-dir').value||null,
+    responsable:document.getElementById('cl-responsable').value||null,
+  };
+  const{error}=await sb.from('clinicas').update(payload).eq('id',CLINICA_ID);
+  if(error){showToast('Error: '+error.message,false);return;}
+  Object.assign(_clinicaData,payload);
+  const nombre_sidebar=payload.nombre_comercial||payload.nombre;
+  document.getElementById('sidebar-clinica-nombre').textContent=nombre_sidebar;
+  document.title='SudentAr — '+nombre_sidebar;
+  showToast('Datos de la clínica actualizados');
 }
 
 // ══════════════════════════════════════════════
 // ARCHIVOS
 // ══════════════════════════════════════════════
-function subirArchivo(pacId, input) {
-  const files = Array.from(input.files);
-  showToast(`${files.length} archivo(s) listo(s) — integración con almacenamiento próximamente`);
+function subirArchivo(pacId,input){
+  showToast('Función de archivos disponible próximamente');
 }
 
 // ══════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════
-async function cerrarSesion() {
+async function cerrarSesion(){
   await sb.auth.signOut();
   window.location.replace('/login');
 }
 
 // ══════════════════════════════════════════════
-// START
+// INICIO
 // ══════════════════════════════════════════════
 init();
 </script>
