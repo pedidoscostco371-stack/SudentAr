@@ -269,7 +269,7 @@
                onkeydown="if(event.key==='Enter') sbDoLogin()">
       </div>
 
-      <button class="btn-login" id="btn-login" onclick="sbDoLogin()">
+      <button class="btn-login" id="btn-login" id="btn-login">
         Iniciar sesión
       </button>
 
@@ -421,5 +421,9 @@ function showLogin() {
   document.getElementById('email').focus();
 }
 </script>
+<script>
+document.getElementById('btn-login').addEventListener('click', sbDoLogin);
+</script>
+
 </body>
 </html>
