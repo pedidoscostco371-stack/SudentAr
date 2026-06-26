@@ -748,6 +748,12 @@
     <div class="nav-item" onclick="switchView('clinicas')">
       <span class="nav-icon">🏥</span><span>Clínicas</span>
     </div>
+    <div style="padding:16px 20px;border-top:1px solid rgba(255,255,255,0.1);margin-top:auto">
+  <div id="user-nombre" style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:500;margin-bottom:8px">Usuario</div>
+  <button onclick="cerrarSesion()" style="width:100%;padding:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:7px;color:rgba(255,255,255,0.8);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+    🚪 Cerrar sesión
+  </button>
+</div>
   </nav>
 
   <!-- MAIN -->
@@ -4508,3 +4514,5 @@ function clinicaEliminar(id) {
 }
 
 </script>
+</script>
+<script src="/sudentar-db.js"></script>
