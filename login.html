@@ -266,10 +266,10 @@
       <div class="form-group">
         <label>Contraseña</label>
         <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"
-               onkeydown="if(event.key==='Enter') doLogin()">
+               onkeydown="if(event.key==='Enter') sbDoLogin()">
       </div>
 
-      <button class="btn-login" id="btn-login" onclick="doLogin()">
+      <button class="btn-login" id="btn-login" onclick="sbDoLogin()">
         Iniciar sesión
       </button>
 
@@ -296,7 +296,7 @@
         <input type="email" id="reset-email" placeholder="doctor@tuclinica.mx">
       </div>
 
-      <button class="btn-login" id="btn-reset" onclick="doReset()">
+      <button class="btn-login" id="btn-reset" onclick="sbDoReset()">
         Enviar enlace de recuperación
       </button>
 
@@ -330,7 +330,7 @@ async function checkSession() {
 checkSession();
 
 // ── LOGIN ────────────────────────────────────
-async function doLogin() {
+async function sbDoLogin() {
   const email = document.getElementById('email').value.trim();
   const pass  = document.getElementById('password').value;
   const btn   = document.getElementById('btn-login');
@@ -365,7 +365,7 @@ async function doLogin() {
 }
 
 // ── RECUPERAR CONTRASEÑA ─────────────────────
-async function doReset() {
+async function sbDoReset() {
   const email = document.getElementById('reset-email').value.trim();
   const btn   = document.getElementById('btn-reset');
   const errEl = document.getElementById('reset-error-box');
