@@ -1,0 +1,4 @@
+*.exe
+*.zip
+*.dmg
+node_modules/
