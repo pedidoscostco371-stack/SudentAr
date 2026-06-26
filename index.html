@@ -125,6 +125,45 @@ textarea{resize:vertical;min-height:72px;}
 .empty{padding:40px;text-align:center;color:var(--muted);}
 .empty-icon{font-size:28px;margin-bottom:6px;}
 .empty-title{font-weight:600;margin-bottom:4px;}
+
+/* ══════════ RESPONSIVE MÓVIL ══════════ */
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:12px 0;bottom:auto;overflow-y:visible;}
+  .sidebar-logo{padding:0 16px 12px;border-bottom:none;border-right:1px solid rgba(255,255,255,.15);margin-bottom:0;display:flex;flex-direction:column;justify-content:center;flex-shrink:0;}
+  .nav-label{display:none;}
+  .nav-item{padding:8px 14px;font-size:12px;}
+  .nav-icon{width:14px;height:14px;}
+  .nav-spacer{display:none;}
+  .sidebar-user{padding:8px 16px;border-top:none;border-left:1px solid rgba(255,255,255,.15);margin-left:auto;display:flex;flex-direction:column;justify-content:center;}
+  .btn-logout{margin-top:4px;}
+  .app{flex-direction:column;}
+  .main{margin-left:0;padding:16px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .stats-grid-3{grid-template-columns:1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .form-grid .full{grid-column:1;}
+  .page-header{flex-direction:column;align-items:flex-start;gap:10px;}
+  table{font-size:12px;}
+  th,td{padding:8px 10px;}
+  .modal{max-width:100%;border-radius:12px;}
+  .filter-bar{flex-direction:column;}
+  .filter-bar input,.filter-bar select{width:100%;}
+}
+@media(max-width:480px){
+  .sidebar{display:none;}
+  .main{padding:12px;}
+  .stat-val{font-size:20px;}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:10px;}
+}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);z-index:200;padding:6px 0 env(safe-area-inset-bottom,6px);}
+.bottom-nav-items{display:flex;justify-content:space-around;}
+.bnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;border:none;background:none;color:var(--muted);font-size:10px;font-weight:500;cursor:pointer;font-family:inherit;min-width:60px;border-radius:8px;}
+.bnav-item.active{color:var(--purple);}
+.bnav-item svg{width:20px;height:20px;}
+@media(max-width:480px){.bottom-nav{display:block;}.main{padding-bottom:80px;}}
+
+.bnav-drawer-item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 8px;background:none;border:none;border-bottom:1px solid var(--border);font-family:inherit;font-size:15px;font-weight:500;color:var(--text);cursor:pointer;text-align:left;}
+.bnav-drawer-item:hover{color:var(--purple);}
 </style>
 </head>
 <body>
@@ -1519,7 +1558,363 @@ async function cerrarSesion(){
 // ══════════════════════════════════════════════
 // INICIO
 // ══════════════════════════════════════════════
+
+function switchViewMobile(name, el) {
+  if (name === 'menu') { document.getElementById('mobile-drawer').style.display = 'block'; return; }
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+function cerrarDrawer() { document.getElementById('mobile-drawer').style.display = 'none'; }
+
+/**
+ * sudentar-patch.js
+ * Agrega a index.html:
+ *   1. Folio consecutivo FOL-YYYYMMDD-XXXX
+ *   2. Comprobante WhatsApp (botón prellenado)
+ *   3. Comprobante email con Resend
+ *   4. CSS responsive móvil
+ *
+ * CÓMO USAR:
+ *   Pegar el contenido de este archivo ANTES del cierre </script>
+ *   en index.html (justo antes de la última línea "init();")
+ */
+
+// ══════════════════════════════════════════════
+// RESEND CONFIG
+// ══════════════════════════════════════════════
+const RESEND_KEY = 're_dAp9tj7M_8GNbkQuvcwNjh8mCyUkoKLLp';
+const EMAIL_FROM = 'onboarding@resend.dev'; // Cambiar por dominio propio cuando tengas uno
+
+// ══════════════════════════════════════════════
+// FOLIO
+// ══════════════════════════════════════════════
+async function generarFolio() {
+  const hoy = todayStr().replace(/-/g,''); // 20260626
+  // Contar pagos del día para esta clínica
+  const { count } = await sb.from('pagos')
+    .select('*', { count:'exact', head:true })
+    .eq('clinica_id', CLINICA_ID)
+    .eq('fecha', todayStr());
+  const num = String((count||0) + 1).padStart(4,'0');
+  return `FOL-${hoy}-${num}`;
+}
+
+// ══════════════════════════════════════════════
+// MODAL COMPROBANTE
+// ══════════════════════════════════════════════
+function mostrarComprobante(pago, paciente) {
+  // Crear modal de comprobante dinámicamente
+  let modal = document.getElementById('modal-comprobante');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-comprobante';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
+  const cons = getCons(pago.consultorio_id);
+  const esTratamiento = paciente?.tipo === 'tratamiento';
+  const pagadoTotal = _pagos
+    .filter(pg => pg.paciente_id == paciente?.id && pg.tipo !== 'egreso')
+    .reduce((s,pg) => s + Number(pg.monto), 0);
+  const saldo = esTratamiento ? Math.max(0, Number(paciente?.costo_total||0) - pagadoTotal) : 0;
+
+  const msgWA = esTratamiento
+    ? `✅ *${clinicaNombre}*\n\nFolio: *${pago.folio}*\nFecha: ${fmtDate(pago.fecha)}\n\nRecibimos tu pago:\n• Monto abonado: *${fmtMoney(pago.monto)}*\n• Costo del tratamiento: ${fmtMoney(paciente?.costo_total)}\n• Total pagado: ${fmtMoney(pagadoTotal)}\n• Saldo restante: *${fmtMoney(saldo)}*\n\nGracias ${paciente?.nombre} 🦷`
+    : `✅ *${clinicaNombre}*\n\nFolio: *${pago.folio}*\nFecha: ${fmtDate(pago.fecha)}\n\nRecibimos tu pago:\n• Concepto: ${pago.concepto||'Consulta'}\n• Monto: *${fmtMoney(pago.monto)}*\n• Forma de pago: ${pago.forma_pago}\n\nGracias ${paciente?.nombre} 🦷`;
+
+  const waLink = paciente?.telefono
+    ? `https://wa.me/52${paciente.telefono.replace(/\D/g,'')}?text=${encodeURIComponent(msgWA)}`
+    : null;
+
+  modal.innerHTML = `
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">Comprobante de Pago</span>
+      <button class="modal-close" onclick="closeModal('modal-comprobante')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- FOLIO -->
+      <div style="background:var(--purple-l);border-radius:10px;padding:16px 20px;text-align:center;margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--purple);margin-bottom:4px">Folio</div>
+        <div style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--dark)">${pago.folio}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${fmtDate(pago.fecha)}</div>
+      </div>
+
+      <!-- DATOS PAGO -->
+      <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="color:var(--muted);font-size:13px">Paciente</span>
+          <strong style="font-size:13px">${paciente?.nombre||'—'}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="color:var(--muted);font-size:13px">Concepto</span>
+          <span style="font-size:13px">${pago.concepto||pago.tipo}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="color:var(--muted);font-size:13px">Forma de pago</span>
+          <span style="font-size:13px">${pago.forma_pago}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="color:var(--muted);font-size:13px">Consultorio</span>
+          <span style="font-size:13px">${cons?.nombre||'—'}</span>
+        </div>
+        ${esTratamiento ? `
+        <div style="border-top:1px solid var(--border);margin:10px 0"></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="color:var(--muted);font-size:13px">Costo tratamiento</span>
+          <span style="font-size:13px">${fmtMoney(paciente?.costo_total)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="color:var(--muted);font-size:13px">Total pagado</span>
+          <span style="font-size:13px;color:var(--green)">${fmtMoney(pagadoTotal)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-weight:700">
+          <span style="font-size:13px">Saldo restante</span>
+          <span style="color:${saldo>0?'var(--red)':'var(--green)'}">${fmtMoney(saldo)}</span>
+        </div>` : ''}
+        <div style="border-top:1px solid var(--border);margin:10px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800">
+          <span>Monto recibido</span>
+          <span style="color:var(--green)">${fmtMoney(pago.monto)}</span>
+        </div>
+      </div>
+
+      <!-- BOTONES ENVÍO -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${waLink ? `
+        <a href="${waLink}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#25D366;color:#fff;border-radius:9px;font-weight:600;font-size:14px;text-decoration:none;font-family:'DM Sans',sans-serif">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Enviar por WhatsApp
+        </a>` : `<div style="font-size:12px;color:var(--muted);text-align:center">Sin teléfono registrado para enviar por WhatsApp</div>`}
+        
+        ${paciente?.email ? `
+        <button onclick="enviarEmailComprobante(${JSON.stringify(pago).replace(/"/g,'&quot;')}, '${paciente.id}')" 
+          style="display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:var(--purple);color:#fff;border-radius:9px;font-weight:600;font-size:14px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif" id="btn-send-email">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+          Enviar por email
+        </button>` : `<div style="font-size:12px;color:var(--muted);text-align:center">Sin email registrado para enviar comprobante</div>`}
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-comprobante')">Cerrar</button>
+    </div>
+  </div>`;
+
+  modal.classList.add('open');
+}
+
+async function enviarEmailComprobante(pago, pacId) {
+  const paciente = getPac(pacId);
+  if (!paciente?.email) return showToast('Sin email registrado', false);
+  const btn = document.getElementById('btn-send-email');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+
+  const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
+  const esTratamiento = paciente.tipo === 'tratamiento';
+  const pagadoTotal = _pagos
+    .filter(pg => pg.paciente_id == paciente.id && pg.tipo !== 'egreso')
+    .reduce((s,pg) => s + Number(pg.monto), 0);
+  const saldo = esTratamiento ? Math.max(0, Number(paciente.costo_total||0) - pagadoTotal) : 0;
+
+  const htmlEmail = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><style>
+  body{font-family:Arial,sans-serif;background:#F4F3F8;margin:0;padding:20px;}
+  .container{max-width:480px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+  .header{background:linear-gradient(135deg,#3BBFBF,#7B52CC);padding:28px 24px;text-align:center;}
+  .header h1{color:#fff;font-size:22px;margin:0 0 4px;font-weight:800;}
+  .header p{color:rgba(255,255,255,.8);font-size:13px;margin:0;}
+  .folio-box{background:#EDE9FA;border-radius:10px;padding:16px;text-align:center;margin:20px 24px;}
+  .folio-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#7B52CC;}
+  .folio-num{font-size:22px;font-weight:800;color:#3B2D8F;margin-top:4px;}
+  .body{padding:0 24px 24px;}
+  .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EDE9FA;font-size:13px;}
+  .row:last-child{border-bottom:none;}
+  .label{color:#7A748F;}
+  .total-row{display:flex;justify-content:space-between;padding:12px 16px;background:#EAF5EE;border-radius:8px;margin-top:12px;font-weight:700;font-size:16px;}
+  .footer{text-align:center;padding:16px 24px;font-size:11px;color:#7A748F;border-top:1px solid #EDE9FA;}
+</style></head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>${clinicaNombre}</h1>
+    <p>Comprobante de pago</p>
+  </div>
+  <div class="folio-box">
+    <div class="folio-label">Folio</div>
+    <div class="folio-num">${pago.folio}</div>
+    <div style="font-size:12px;color:#7A748F;margin-top:4px">${fmtDate(pago.fecha)}</div>
+  </div>
+  <div class="body">
+    <div class="row"><span class="label">Paciente</span><strong>${paciente.nombre}</strong></div>
+    <div class="row"><span class="label">Concepto</span><span>${pago.concepto||pago.tipo}</span></div>
+    <div class="row"><span class="label">Forma de pago</span><span>${pago.forma_pago}</span></div>
+    ${esTratamiento ? `
+    <div class="row"><span class="label">Costo del tratamiento</span><span>${fmtMoney(paciente.costo_total)}</span></div>
+    <div class="row"><span class="label">Total pagado hasta hoy</span><span style="color:#2D7A4F">${fmtMoney(pagadoTotal)}</span></div>
+    <div class="row"><span class="label">Saldo restante</span><span style="color:${saldo>0?'#B94040':'#2D7A4F'};font-weight:700">${fmtMoney(saldo)}</span></div>
+    ` : ''}
+    <div class="total-row">
+      <span>Monto recibido</span>
+      <span style="color:#2D7A4F">${fmtMoney(pago.monto)}</span>
+    </div>
+  </div>
+  <div class="footer">Este es un comprobante generado por ${clinicaNombre} a través de SudentAr.<br>Conserve este documento para sus registros.</div>
+</div>
+</body></html>`;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `${clinicaNombre} <${EMAIL_FROM}>`,
+        to: [paciente.email],
+        subject: `Comprobante de pago ${pago.folio} — ${clinicaNombre}`,
+        html: htmlEmail,
+      }),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      showToast('Email enviado correctamente');
+      if (btn) { btn.textContent = '✓ Email enviado'; }
+    } else {
+      throw new Error(result.message || 'Error al enviar');
+    }
+  } catch (err) {
+    showToast('Error al enviar email: ' + err.message, false);
+    if (btn) { btn.disabled = false; btn.textContent = 'Reintentar envío'; }
+  }
+}
+
+// ══════════════════════════════════════════════
+// REEMPLAZAR guardarAbono CON FOLIO + COMPROBANTE
+// ══════════════════════════════════════════════
+async function guardarAbono() {
+  const monto = parseFloat(document.getElementById('abo-monto').value);
+  if (!monto || monto <= 0) return showToast('Ingresa un monto válido', false);
+  const pacId = document.getElementById('abo-pac-id').value;
+  const paciente = getPac(pacId);
+
+  const folio = await generarFolio();
+
+  const { data, error } = await sb.from('pagos').insert({
+    clinica_id: CLINICA_ID,
+    paciente_id: pacId,
+    tipo: 'abono',
+    monto,
+    folio,
+    forma_pago: document.getElementById('abo-forma').value,
+    concepto: document.getElementById('abo-concepto').value || null,
+    fecha: document.getElementById('abo-fecha').value || todayStr(),
+    notas: document.getElementById('abo-notas').value || null,
+    creado_por: USER_ID,
+    creado_por_nombre: USER_NOMBRE,
+  }).select().single();
+
+  if (error) { showToast('Error: ' + error.message, false); return; }
+  _pagos.unshift(data);
+  closeModal('modal-abono');
+  renderMovimientos();
+  showToast('Pago registrado · Folio ' + folio);
+  // Mostrar comprobante
+  mostrarComprobante(data, paciente);
+  verPaciente(pacId);
+}
+
+// ══════════════════════════════════════════════
+// REEMPLAZAR guardarIngreso CON FOLIO + COMPROBANTE
+// ══════════════════════════════════════════════
+async function guardarIngreso() {
+  const monto = parseFloat(document.getElementById('ing-monto').value);
+  if (!monto || monto <= 0) return showToast('Ingresa un monto válido', false);
+  const pacId = document.getElementById('ing-pac').value || null;
+  const paciente = pacId ? getPac(pacId) : null;
+
+  const folio = await generarFolio();
+
+  const { data, error } = await sb.from('pagos').insert({
+    clinica_id: CLINICA_ID,
+    paciente_id: pacId,
+    consultorio_id: document.getElementById('ing-cons').value || null,
+    tipo: document.getElementById('ing-tipo').value,
+    monto,
+    folio,
+    forma_pago: document.getElementById('ing-forma').value,
+    concepto: document.getElementById('ing-concepto').value || null,
+    fecha: document.getElementById('ing-fecha').value || todayStr(),
+    notas: document.getElementById('ing-notas').value || null,
+    creado_por: USER_ID,
+    creado_por_nombre: USER_NOMBRE,
+  }).select().single();
+
+  if (error) { showToast('Error: ' + error.message, false); return; }
+  _pagos.unshift(data);
+  closeModal('modal-nuevo-ingreso');
+  renderMovimientos();
+  showToast('Ingreso registrado · Folio ' + folio);
+  if (paciente) mostrarComprobante(data, paciente);
+}
+
+// ══════════════════════════════════════════════
+// SQL NECESARIO — agregar columna folio a pagos
+// (Ejecutar en Supabase SQL Editor una sola vez)
+// ALTER TABLE public.pagos ADD COLUMN IF NOT EXISTS folio TEXT;
+// ══════════════════════════════════════════════
+
 init();
 </script>
+
+<!-- BOTTOM NAV MÓVIL -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-items">
+    <button class="bnav-item active" onclick="switchViewMobile('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Inicio
+    </button>
+    <button class="bnav-item" onclick="switchViewMobile('pacientes',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Pacientes
+    </button>
+    <button class="bnav-item" onclick="switchViewMobile('citas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Citas
+    </button>
+    <button class="bnav-item" onclick="switchViewMobile('ingresos',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>Ingresos
+    </button>
+    <button class="bnav-item" onclick="switchViewMobile('menu',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>Más
+    </button>
+  </div>
+</nav>
+
+<!-- DRAWER MÓVIL -->
+<div id="mobile-drawer" style="display:none;position:fixed;inset:0;z-index:300">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="cerrarDrawer()"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;padding:20px 16px 40px">
+    <div style="width:32px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 20px"></div>
+    <button onclick="switchViewMobile('consultorios',null);cerrarDrawer()" class="bnav-drawer-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Consultorios
+    </button>
+    <button onclick="switchViewMobile('medicos',null);cerrarDrawer()" class="bnav-drawer-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Médicos
+    </button>
+    <button onclick="switchViewMobile('horarios',null);cerrarDrawer()" class="bnav-drawer-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Horarios
+    </button>
+    <button onclick="switchViewMobile('clinica',null);cerrarDrawer()" class="bnav-drawer-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Mi Clínica
+    </button>
+    <button onclick="cerrarSesion()" style="width:100%;padding:12px;background:var(--red-l);color:var(--red);border:none;border-radius:9px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">
+      Cerrar sesión
+    </button>
+  </div>
+</div>
 </body>
 </html>
