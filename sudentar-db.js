@@ -9,7 +9,7 @@ const SB_URL  = 'https://ssfttiwcimzkpbsonzfv.supabase.co';
 const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZnR0aXdjaW16a3Bic29uemZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYyNTAsImV4cCI6MjA5Nzk4MjI1MH0.CgxrnhTl4oIOgCguM5Gnr981yq3L57ExcORbWoPpN9s';
 const _sb = window.SB || supabase.createClient(SB_URL, SB_KEY);
 
-let _clinicaId = null;
+let _clinicaId = '98213778-774e-460d-a4b2-2bfae914c097';
 let _userId    = null;
 
 // ── INICIALIZACIÓN ─────────────────────────────────────────────
