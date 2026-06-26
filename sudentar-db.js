@@ -417,3 +417,11 @@ function seedDemo() {
   // No hace nada en producción — los datos vienen de Supabase
   console.log('SudentAr: modo Supabase activo, seedDemo desactivado');
 }
+// Forzar recarga del select de médicos después de cargar datos
+const _origRenderAll = window.renderAll;
+window.renderAll = function() {
+  if (typeof _origRenderAll === 'function') _origRenderAll();
+  populateMedicoSelect('cita-medico-id');
+  populateMedicoSelect('filtro-cita-medico', true);
+  populateMedicoSelect('cal-medico-sel', true);
+};
