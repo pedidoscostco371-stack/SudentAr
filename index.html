@@ -126,6 +126,37 @@ textarea{resize:vertical;min-height:72px;}
 .empty-icon{font-size:28px;margin-bottom:6px;}
 .empty-title{font-weight:600;margin-bottom:4px;}
 
+/* ODONTOGRAMA */
+.odo-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:18px;}
+.odo-row{display:flex;gap:4px;}
+.odo-row.flip{flex-direction:row-reverse;}
+.odo-mid-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:2px 0;}
+.odo-tooth{
+  width:34px;height:42px;border-radius:7px;border:1.5px solid var(--border);
+  background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .12s;position:relative;flex-shrink:0;
+}
+.odo-tooth:hover{border-color:var(--purple);transform:translateY(-1px);}
+.odo-tooth .num{font-size:10px;font-weight:700;color:var(--muted);}
+.odo-tooth .dot{width:7px;height:7px;border-radius:50%;background:transparent;margin-top:2px;}
+.odo-tooth.has-note{border-color:var(--purple);background:var(--purple-l);}
+.odo-tooth.has-note .num{color:var(--purple);}
+.odo-tooth.has-note .dot{background:var(--purple);}
+.odo-tooth.selected{border-color:#3BBFBF;background:var(--teal-l);box-shadow:0 0 0 2px rgba(59,191,191,.3);}
+.odo-quad-gap{width:14px;}
+.odo-legend{display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--muted);margin-top:8px;flex-wrap:wrap;}
+.odo-legend span{display:inline-flex;align-items:center;gap:5px;}
+.odo-legend .sw{width:10px;height:10px;border-radius:3px;display:inline-block;}
+.odo-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.odo-sel-count{font-size:12px;color:var(--purple);font-weight:600;}
+.hc-item{padding:12px 16px;border:1px solid var(--border);border-radius:9px;margin-bottom:10px;}
+.hc-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;}
+.hc-item-piezas{font-size:11px;color:var(--purple);font-weight:600;margin-bottom:4px;}
+.hc-item-fecha{font-size:11px;color:var(--muted);white-space:nowrap;}
+.hc-item-desc{font-size:13px;color:var(--text);}
+.hc-badge-pend{background:var(--yellow-l);color:var(--yellow);}
+.hc-badge-hecho{background:var(--green-l);color:var(--green);}
+
 /* ══════════ RESPONSIVE MÓVIL ══════════ */
 @media(max-width:768px){
   .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:12px 0;bottom:auto;overflow-y:visible;}
@@ -275,7 +306,7 @@ textarea{resize:vertical;min-height:72px;}
   <div class="page-header">
     <div><div class="page-title">Ingresos y Egresos</div></div>
     <div style="display:flex;gap:10px;">
-      <button class="btn btn-primary" onclick="openModal('modal-nuevo-ingreso')">+ Ingreso</button>
+      <button class="btn btn-primary" onclick="abrirIngresoManual()">+ Ingreso</button>
       <button class="btn btn-ghost" style="border-color:var(--red);color:var(--red)" onclick="openModal('modal-nuevo-egreso')">+ Egreso</button>
     </div>
   </div>
@@ -401,7 +432,7 @@ textarea{resize:vertical;min-height:72px;}
 
 <!-- DETALLE PACIENTE -->
 <div class="modal-overlay" id="modal-detalle">
-<div class="modal" style="max-width:780px">
+<div class="modal" style="max-width:920px">
   <div class="modal-header">
     <span class="modal-title" id="det-nombre">—</span>
     <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="editarPaciente()">Editar</button><button class="modal-close" onclick="closeModal('modal-detalle')">✕</button></div>
@@ -409,11 +440,13 @@ textarea{resize:vertical;min-height:72px;}
   <div class="modal-body">
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab(this,'tp-exp')">Expediente</button>
+      <button class="tab-btn" onclick="switchTab(this,'tp-hc')">Historia Clínica</button>
       <button class="tab-btn" onclick="switchTab(this,'tp-fin')">Financiero</button>
       <button class="tab-btn" onclick="switchTab(this,'tp-cit')">Citas</button>
       <button class="tab-btn" onclick="switchTab(this,'tp-arc')">Archivos</button>
     </div>
     <div id="tp-exp" class="tab-pane active"></div>
+    <div id="tp-hc" class="tab-pane"></div>
     <div id="tp-fin" class="tab-pane"></div>
     <div id="tp-cit" class="tab-pane"></div>
     <div id="tp-arc" class="tab-pane"></div>
@@ -458,7 +491,7 @@ textarea{resize:vertical;min-height:72px;}
 <!-- INGRESO -->
 <div class="modal-overlay" id="modal-nuevo-ingreso">
 <div class="modal modal-sm">
-  <div class="modal-header"><span class="modal-title">Registrar Ingreso</span><button class="modal-close" onclick="closeModal('modal-nuevo-ingreso')">✕</button></div>
+  <div class="modal-header"><span class="modal-title" id="ing-title">Registrar Ingreso</span><button class="modal-close" onclick="closeModal('modal-nuevo-ingreso')">✕</button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">Paciente</label><select id="ing-pac"></select></div>
     <div class="form-group"><label class="form-label">Consultorio</label><select id="ing-cons"></select></div>
@@ -586,6 +619,36 @@ textarea{resize:vertical;min-height:72px;}
 </div>
 </div>
 
+<!-- HISTORIA CLÍNICA — NOTA DE PROCEDIMIENTO -->
+<div class="modal-overlay" id="modal-hc-nota">
+<div class="modal modal-md">
+  <div class="modal-header"><span class="modal-title" id="hc-nota-title">Nueva Nota Clínica</span><button class="modal-close" onclick="closeModal('modal-hc-nota')">✕</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="hc-edit-id">
+    <input type="hidden" id="hc-pac-id">
+    <div class="form-group">
+      <label class="form-label">Piezas dentales seleccionadas</label>
+      <div id="hc-piezas-chips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:30px;padding:6px 0"></div>
+      <div style="font-size:11px;color:var(--muted)">Selecciona los dientes en el odontograma antes de abrir esta nota, o usa "Nota general" para una observación sin pieza específica.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción del procedimiento / hallazgo *</label>
+      <textarea id="hc-desc" rows="3" placeholder="Ej. Caries detectada, requiere resina"></textarea>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Estado *</label>
+        <select id="hc-estado"><option value="pendiente">Pendiente por hacer</option><option value="realizado">Ya realizado</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="hc-fecha"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-hc-nota')">Cancelar</button>
+    <button class="btn btn-primary" id="btn-save-hc" onclick="guardarNotaHC()">Guardar Nota</button>
+  </div>
+</div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -602,6 +665,8 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 let CLINICA_ID=null, USER_ID=null, USER_ROL=null, USER_NOMBRE='', USER_CONS=[];
 let _pacs=[], _citas=[], _pagos=[], _cons=[], _meds=[], _horarios=[], _clinicaData=null;
 let _currentPacId=null;
+let _hc=[]; // notas de historia clínica del paciente actual
+let _odoSel=[]; // piezas seleccionadas actualmente en el odontograma (multi-select)
 
 // ══════════════════════════════════════════════
 // INIT
@@ -682,7 +747,13 @@ function renderAll() {
 // ══════════════════════════════════════════════
 const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DIAS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-function todayStr() { return new Date().toISOString().split('T')[0]; }
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 function fmtDate(d) { if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`; }
 function fmtMoney(n) { return '$'+Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function getPac(id) { return _pacs.find(p=>p.id==id); }
@@ -819,8 +890,10 @@ function cargarCitasDia() {
   el.innerHTML=citas.map(c=>{
     const pac=getPac(c.paciente_id),cons=getCons(c.consultorio_id),med=getMed(c.medico_id);
     const col=cons?.color||'#DDD9ED';
-    const estadoLabel={'no-se-presento':'no asistió'}[c.estado]||c.estado;
-    const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br','no-se-presento':'br'}[c.estado]||'bgr';
+    const esNoAsistio=c.estado==='cancelada'&&(c.notas||'').includes('[NO_ASISTIO]');
+    const estadoLabel=esNoAsistio?'no asistió':c.estado;
+    const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br'}[c.estado]||'bgr';
+    const notaVisible=(c.notas||'').replace('[NO_ASISTIO]','').trim();
     const esTrat=pac?.tipo==='tratamiento';
     let acciones='';
     if(c.estado==='pendiente'){
@@ -836,7 +909,7 @@ function cargarCitasDia() {
     }
     if(c.estado==='atendida'){
       const label=esTrat?'+ Registrar abono':'+ Registrar pago';
-      const fn=esTrat?`abrirAbonoDesdeDAsh('${pac?.id||''}')`:`abrirPagoDesdeDAsh('${pac?.id||''}')`;
+      const fn=esTrat?`abrirAbonoDesdeDAsh('${pac?.id||''}')`:`abrirPagoDesdeDAsh('${pac?.id||''}','${c.consultorio_id||''}')`;
       acciones=`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple);border:none;white-space:nowrap" onclick="${fn}">${label}</button>`;
     }
     return`<div class="cita-item" style="border-left:3px solid ${col}">
@@ -844,7 +917,7 @@ function cargarCitasDia() {
       <div class="cita-info">
         <div class="cita-pac">${pac?.nombre||'—'}</div>
         <div class="cita-det">${c.tipo} · ${cons?.nombre||'—'} · ${med?.nombre||'—'}</div>
-        ${c.notas?`<div class="cita-det">${c.notas}</div>`:''}
+        ${notaVisible?`<div class="cita-det">${notaVisible}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span class="badge ${bp}">${estadoLabel}</span>
@@ -952,13 +1025,208 @@ async function guardarPaciente(){
   }
 }
 
-function verPaciente(id){
+// ══════════════════════════════════════════════
+// ODONTOGRAMA — numeración FDI
+// ══════════════════════════════════════════════
+const ODO_SUP_DER = [18,17,16,15,14,13,12,11]; // superior derecha (paciente) → hacia el centro
+const ODO_SUP_IZQ = [21,22,23,24,25,26,27,28]; // superior izquierda → hacia afuera
+const ODO_INF_DER = [48,47,46,45,44,43,42,41]; // inferior derecha → hacia el centro
+const ODO_INF_IZQ = [31,32,33,34,35,36,37,38]; // inferior izquierda → hacia afuera
+
+function piezaTieneNota(pieza){
+  return _hc.some(n=>(n.piezas||[]).includes(pieza));
+}
+
+function renderOdontogramaToolbar(){
+  const count=_odoSel.length;
+  return `<div class="odo-toolbar">
+    <span class="odo-sel-count">${count?`${count} pieza${count>1?'s':''} seleccionada${count>1?'s':''}`:'Toca uno o varios dientes para agregar una nota'}</span>
+    <div style="display:flex;gap:8px">
+      ${count?`<button class="btn btn-ghost btn-sm" onclick="limpiarSeleccionOdo()">Limpiar selección</button>`:''}
+      <button class="btn btn-primary btn-sm" ${count?'':'disabled'} onclick="abrirNotaHC()">+ Nota para selección</button>
+      <button class="btn btn-ghost btn-sm" onclick="abrirNotaHC(true)">+ Nota general</button>
+    </div>
+  </div>`;
+}
+
+function renderOdontogramaSVGRow(piezas){
+  return piezas.map(p=>{
+    const sel=_odoSel.includes(p);
+    const nota=piezaTieneNota(p);
+    return `<div class="odo-tooth ${sel?'selected':''} ${nota?'has-note':''}" onclick="toggleDienteOdo(${p})" title="Pieza ${p}">
+      <span class="num">${p}</span><span class="dot"></span>
+    </div>`;
+  }).join('');
+}
+
+function renderOdontograma(){
+  return `
+    <div class="odo-wrap">
+      <div class="odo-row">
+        ${renderOdontogramaSVGRow(ODO_SUP_DER)}
+        <div class="odo-quad-gap"></div>
+        ${renderOdontogramaSVGRow(ODO_SUP_IZQ)}
+      </div>
+      <div class="odo-mid-label">— oclusal —</div>
+      <div class="odo-row">
+        ${renderOdontogramaSVGRow(ODO_INF_DER)}
+        <div class="odo-quad-gap"></div>
+        ${renderOdontogramaSVGRow(ODO_INF_IZQ)}
+      </div>
+      <div class="odo-legend">
+        <span><span class="sw" style="background:var(--purple-l);border:1.5px solid var(--purple)"></span>Con nota registrada</span>
+        <span><span class="sw" style="background:var(--teal-l);border:1.5px solid #3BBFBF"></span>Seleccionado ahora</span>
+        <span><span class="sw" style="background:#fff;border:1.5px solid var(--border)"></span>Sin novedad</span>
+      </div>
+    </div>`;
+}
+
+function toggleDienteOdo(pieza){
+  const i=_odoSel.indexOf(pieza);
+  if(i>=0)_odoSel.splice(i,1);else _odoSel.push(pieza);
+  renderHistoriaClinicaTab();
+}
+
+function limpiarSeleccionOdo(){
+  _odoSel=[];
+  renderHistoriaClinicaTab();
+}
+
+function abrirNotaHC(general){
+  if(!general&&!_odoSel.length)return showToast('Selecciona al menos un diente, o usa "Nota general"',false);
+  document.getElementById('hc-edit-id').value='';
+  document.getElementById('hc-pac-id').value=_currentPacId;
+  document.getElementById('hc-nota-title').textContent=general?'Nueva Nota General':'Nueva Nota Clínica';
+  const piezas=general?[]:[..._odoSel];
+  document.getElementById('hc-piezas-chips').innerHTML=piezas.length
+    ?piezas.map(p=>`<span class="badge bp">Pieza ${p}</span>`).join('')
+    :'<span style="font-size:12px;color:var(--muted)">Sin pieza específica (nota general)</span>';
+  document.getElementById('hc-piezas-chips').dataset.piezas=JSON.stringify(piezas);
+  document.getElementById('hc-desc').value='';
+  document.getElementById('hc-estado').value='pendiente';
+  document.getElementById('hc-fecha').value=todayStr();
+  openModal('modal-hc-nota');
+}
+
+function editarNotaHC(id){
+  const n=_hc.find(x=>x.id==id);if(!n)return;
+  document.getElementById('hc-edit-id').value=n.id;
+  document.getElementById('hc-pac-id').value=_currentPacId;
+  document.getElementById('hc-nota-title').textContent='Editar Nota Clínica';
+  const piezas=n.piezas||[];
+  document.getElementById('hc-piezas-chips').innerHTML=piezas.length
+    ?piezas.map(p=>`<span class="badge bp">Pieza ${p}</span>`).join('')
+    :'<span style="font-size:12px;color:var(--muted)">Sin pieza específica (nota general)</span>';
+  document.getElementById('hc-piezas-chips').dataset.piezas=JSON.stringify(piezas);
+  document.getElementById('hc-desc').value=n.descripcion||'';
+  document.getElementById('hc-estado').value=n.estado||'pendiente';
+  document.getElementById('hc-fecha').value=n.fecha||todayStr();
+  openModal('modal-hc-nota');
+}
+
+async function guardarNotaHC(){
+  const desc=document.getElementById('hc-desc').value.trim();
+  if(!desc)return showToast('Describe el procedimiento o hallazgo',false);
+  const editId=document.getElementById('hc-edit-id').value;
+  const pacId=document.getElementById('hc-pac-id').value;
+  const piezas=JSON.parse(document.getElementById('hc-piezas-chips').dataset.piezas||'[]');
+  const payload={
+    clinica_id:CLINICA_ID,paciente_id:pacId,piezas,
+    descripcion:desc,
+    estado:document.getElementById('hc-estado').value,
+    fecha:document.getElementById('hc-fecha').value||todayStr(),
+    creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
+  };
+  const btn=document.getElementById('btn-save-hc');
+  btn.disabled=true;btn.textContent='Guardando...';
+  if(editId){
+    const{error}=await sb.from('historia_clinica').update(payload).eq('id',editId);
+    btn.disabled=false;btn.textContent='Guardar Nota';
+    if(error){showToast('Error: '+error.message,false);return;}
+    const idx=_hc.findIndex(x=>x.id==editId);
+    if(idx>=0)_hc[idx]={..._hc[idx],...payload,id:editId};
+    showToast('Nota actualizada');
+  }else{
+    const{data,error}=await sb.from('historia_clinica').insert(payload).select().single();
+    btn.disabled=false;btn.textContent='Guardar Nota';
+    if(error){showToast('Error: '+error.message,false);return;}
+    _hc.unshift(data);
+    showToast('Nota registrada');
+  }
+  _odoSel=[];
+  closeModal('modal-hc-nota');
+  renderHistoriaClinicaTab();
+}
+
+async function marcarHCRealizado(id){
+  const{error}=await sb.from('historia_clinica').update({estado:'realizado'}).eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  const n=_hc.find(x=>x.id==id);if(n)n.estado='realizado';
+  renderHistoriaClinicaTab();showToast('Marcado como realizado');
+}
+
+async function eliminarNotaHC(id){
+  if(!confirm('¿Eliminar esta nota clínica?'))return;
+  const{error}=await sb.from('historia_clinica').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  _hc=_hc.filter(x=>x.id!=id);
+  renderHistoriaClinicaTab();showToast('Nota eliminada');
+}
+
+function renderHistoriaClinicaTab(){
+  const el=document.getElementById('tp-hc');if(!el)return;
+  const pendientes=_hc.filter(n=>n.estado==='pendiente').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const realizadas=_hc.filter(n=>n.estado==='realizado').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const itemHTML=(n)=>`
+    <div class="hc-item">
+      <div class="hc-item-head">
+        <div>
+          ${n.piezas&&n.piezas.length?`<div class="hc-item-piezas">Pieza${n.piezas.length>1?'s':''}: ${n.piezas.join(', ')}</div>`:'<div class="hc-item-piezas" style="color:var(--muted)">Nota general</div>'}
+          <div class="hc-item-desc">${n.descripcion}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="hc-item-fecha">${fmtDate(n.fecha)}</span>
+          <span class="badge ${n.estado==='pendiente'?'hc-badge-pend':'hc-badge-hecho'}">${n.estado==='pendiente'?'Pendiente':'Realizado'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        ${n.estado==='pendiente'?`<button class="btn btn-ghost btn-sm" onclick="marcarHCRealizado('${n.id}')">Marcar realizado</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="editarNotaHC('${n.id}')">Editar</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="eliminarNotaHC('${n.id}')">Eliminar</button>
+      </div>
+    </div>`;
+  el.innerHTML=`
+    ${renderOdontogramaToolbar()}
+    ${renderOdontograma()}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px">
+      <strong>Pendientes por hacer</strong><span class="badge by">${pendientes.length}</span>
+    </div>
+    ${pendientes.length?pendientes.map(itemHTML).join(''):'<div class="empty" style="padding:16px">Sin procedimientos pendientes</div>'}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px">
+      <strong>Historial realizado</strong><span class="badge bg">${realizadas.length}</span>
+    </div>
+    ${realizadas.length?realizadas.map(itemHTML).join(''):'<div class="empty" style="padding:16px">Sin procedimientos registrados aún</div>'}
+  `;
+}
+
+async function cargarHistoriaClinica(pacId){
+  const{data,error}=await sb.from('historia_clinica').select('*').eq('paciente_id',pacId).order('fecha',{ascending:false});
+  if(error){_hc=[];console.error(error);return;}
+  _hc=data||[];
+}
+
+async function verPaciente(id){
   _currentPacId=id;
+  _odoSel=[];
   const p=getPac(id);if(!p)return;
   document.getElementById('det-nombre').textContent=p.nombre;
   const pagos=_pagos.filter(pg=>pg.paciente_id==id&&pg.tipo!=='egreso');
   const pagado=pagos.reduce((s,pg)=>s+Number(pg.monto),0);
   const saldo=saldoPac(p);const med=getMed(p.medico_id);
+
+  // HISTORIA CLÍNICA (cargar antes de pintar, con loader breve)
+  document.getElementById('tp-hc').innerHTML='<div class="empty">Cargando historia clínica...</div>';
+  cargarHistoriaClinica(id).then(renderHistoriaClinicaTab);
 
   // EXPEDIENTE
   document.getElementById('tp-exp').innerHTML=`
@@ -1076,6 +1344,8 @@ function renderCitas(){
   if(!citas.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty">Sin citas</div></td></tr>`;return;}
   tbody.innerHTML=citas.map(c=>{
     const pac=getPac(c.paciente_id),co=getCons(c.consultorio_id),md=getMed(c.medico_id);
+    const esNoAsistio=c.estado==='cancelada'&&(c.notas||'').includes('[NO_ASISTIO]');
+    const estadoLabel=esNoAsistio?'no asistió':c.estado;
     const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br'}[c.estado]||'bgr';
     const esHoy=c.fecha===hoy;
     return`<tr>
@@ -1084,7 +1354,7 @@ function renderCitas(){
       <td style="font-size:12px">${co?.nombre||'—'}</td>
       <td style="font-size:12px">${md?.nombre||'—'}</td>
       <td><span class="badge bgr">${c.tipo}</span></td>
-      <td><span class="badge ${bp}">${c.estado}</span></td>
+      <td><span class="badge ${bp}">${estadoLabel}</span></td>
       <td style="font-size:11px;color:var(--muted)">${c.creado_por_nombre||'—'}</td>
       <td style="white-space:nowrap;display:flex;gap:4px">
         <button class="btn btn-ghost btn-sm" onclick="abrirEditarCita('${c.id}')">Editar</button>
@@ -1209,9 +1479,12 @@ async function marcarAtendida(citaId,pacId,esTrat){
 }
 
 async function marcarNoAsistio(citaId){
-  const{error}=await sb.from('citas').update({estado:'no-se-presento'}).eq('id',citaId);
+  const c=_citas.find(x=>x.id==citaId);
+  const notaActual=c?.notas||'';
+  const nuevaNota=notaActual.includes('[NO_ASISTIO]')?notaActual:('[NO_ASISTIO] '+notaActual).trim();
+  const{error}=await sb.from('citas').update({estado:'cancelada',notas:nuevaNota}).eq('id',citaId);
   if(error){showToast('Error: '+error.message,false);return;}
-  const c=_citas.find(x=>x.id==citaId);if(c)c.estado='no-se-presento';
+  if(c){c.estado='cancelada';c.notas=nuevaNota;}
   renderCitas();cargarCitasDia();renderKPIs();showToast('Cita marcada como no asistió');
 }
 
@@ -1228,10 +1501,24 @@ function abrirAbonoDesdeDAsh(pacId){
   openModal('modal-abono');
 }
 
-function abrirPagoDesdeDAsh(pacId){
+function abrirIngresoManual(){
+  document.getElementById('ing-title').textContent='Registrar Ingreso';
+  document.getElementById('ing-pac').value='';
+  document.getElementById('ing-cons').value='';
+  document.getElementById('ing-tipo').value='abono';
+  document.getElementById('ing-concepto').value='';
+  document.getElementById('ing-monto').value='';
+  document.getElementById('ing-notas').value='';
+  document.getElementById('ing-fecha').value=todayStr();
+  openModal('modal-nuevo-ingreso');
+}
+
+function abrirPagoDesdeDAsh(pacId,consId){
   // Abrir modal de pago (ingreso) pre-llenado
   const pac=getPac(pacId);if(!pac)return;
+  document.getElementById('ing-title').textContent='Registrar Pago — '+pac.nombre;
   document.getElementById('ing-pac').value=pacId;
+  if(consId)document.getElementById('ing-cons').value=consId;
   document.getElementById('ing-tipo').value='visita';
   document.getElementById('ing-concepto').value='Pago por consulta';
   document.getElementById('ing-monto').value='';
@@ -1928,6 +2215,44 @@ async function guardarIngreso() {
 // SQL NECESARIO — agregar columna folio a pagos
 // (Ejecutar en Supabase SQL Editor una sola vez)
 // ALTER TABLE public.pagos ADD COLUMN IF NOT EXISTS folio TEXT;
+// ══════════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+// SQL NECESARIO — tabla historia_clinica (odontograma)
+// (Ejecutar en Supabase SQL Editor una sola vez)
+//
+// CREATE TABLE IF NOT EXISTS public.historia_clinica (
+//   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//   clinica_id UUID NOT NULL REFERENCES public.clinicas(id),
+//   paciente_id UUID NOT NULL REFERENCES public.pacientes(id) ON DELETE CASCADE,
+//   piezas INTEGER[] DEFAULT '{}',
+//   descripcion TEXT NOT NULL,
+//   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente','realizado')),
+//   fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+//   creado_por UUID,
+//   creado_por_nombre TEXT,
+//   created_at TIMESTAMPTZ DEFAULT now()
+// );
+//
+// ALTER TABLE public.historia_clinica ENABLE ROW LEVEL SECURITY;
+//
+// CREATE POLICY "historia_clinica_select" ON public.historia_clinica
+//   FOR SELECT USING (clinica_id IN (SELECT clinica_id FROM public.perfiles WHERE id = auth.uid()));
+// CREATE POLICY "historia_clinica_insert" ON public.historia_clinica
+//   FOR INSERT WITH CHECK (clinica_id IN (SELECT clinica_id FROM public.perfiles WHERE id = auth.uid()));
+// CREATE POLICY "historia_clinica_update" ON public.historia_clinica
+//   FOR UPDATE USING (clinica_id IN (SELECT clinica_id FROM public.perfiles WHERE id = auth.uid()));
+// CREATE POLICY "historia_clinica_delete" ON public.historia_clinica
+//   FOR DELETE USING (clinica_id IN (SELECT clinica_id FROM public.perfiles WHERE id = auth.uid()));
+//
+// También revisa el CHECK constraint de citas.estado — actualmente solo permite
+// 'pendiente','confirmada','atendida','cancelada'. El botón "No asistió" usa
+// 'cancelada' + una nota interna '[NO_ASISTIO]' para diferenciarlo visualmente.
+// Si prefieres un estado propio, ejecuta:
+// ALTER TABLE public.citas DROP CONSTRAINT citas_estado_check;
+// ALTER TABLE public.citas ADD CONSTRAINT citas_estado_check
+//   CHECK (estado IN ('pendiente','confirmada','atendida','cancelada','no-se-presento'));
+// (si haces esto, avísame para simplificar el código de marcarNoAsistio)
 // ══════════════════════════════════════════════
 
 init();
