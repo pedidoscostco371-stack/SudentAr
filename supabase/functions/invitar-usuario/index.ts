@@ -54,7 +54,15 @@ Deno.serve(async (req) => {
       .single();
 
     if (callerPerfilError || !callerPerfil) {
-      return json({ error: "Perfil del solicitante no encontrado" }, 403);
+      return json({
+        error: "Perfil del solicitante no encontrado",
+        debug: {
+          callerUserId: callerUser.id,
+          callerEmail: callerUser.email,
+          dbError: callerPerfilError?.message || null,
+          dbErrorCode: callerPerfilError?.code || null,
+        },
+      }, 403);
     }
 
     if (!["admin_sistema", "admin_clinica"].includes(callerPerfil.rol)) {

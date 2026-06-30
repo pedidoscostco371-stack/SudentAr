@@ -2293,7 +2293,7 @@ async function invitarUsuario(){
     });
     resultado = await resp.json();
     if(!resp.ok){
-      throw new Error(resultado?.error || 'Error desconocido');
+      throw new Error((resultado?.error || 'Error desconocido') + (resultado?.debug ? ' | DEBUG: '+JSON.stringify(resultado.debug) : ''));
     }
   }catch(err){
     btn.disabled=false;btn.textContent='Invitar';
