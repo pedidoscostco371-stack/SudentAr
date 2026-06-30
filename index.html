@@ -937,8 +937,9 @@ function switchView(name,el){
   el.classList.add('active');
 }
 function switchTab(el,id){
-  el.closest('.modal-body').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  el.closest('.modal-body').querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  const scope = el.closest('.modal-body') || el.closest('.view') || document;
+  scope.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  scope.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');document.getElementById(id).classList.add('active');
 }
 function setFechasHoy(){
