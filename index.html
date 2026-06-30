@@ -2264,73 +2264,46 @@ async function invitarUsuario(){
   const btn=document.getElementById('btn-invitar');
   btn.disabled=true;btn.textContent='Invitando...';
 
-  // Guarda la sesión actual del admin: sb.auth.signUp() cambia la sesión activa
-  // del cliente a la del usuario recién creado, lo cual rompería el insert
-  // posterior (se ejecutaría como el usuario nuevo, no como el admin) y dejaría
-  // al admin desconectado de su propia sesión. La restauramos justo después.
+  // Crear usuarios desde el cliente con signUp() no es viable: pisa la sesión
+  // activa del admin y queda sujeto a RLS con el contexto equivocado. La
+  // creación de usuarios por un admin debe hacerse en el servidor con
+  // service_role, vía esta Edge Function (ver supabase/functions/invitar-usuario).
   const { data: { session: adminSession } } = await sb.auth.getSession();
-
-  // Genera una contraseña temporal aleatoria; el usuario deberá usar
-  // "¿Olvidaste tu contraseña?" en el login para establecer la suya.
-  const tempPassword = 'Sudent' + Math.random().toString(36).slice(-8);
-
-  const { data: signUpData, error: signUpError } = await sb.auth.signUp({
-    email, password: tempPassword,
-  });
-
-  if(signUpError){
+  if(!adminSession){
     btn.disabled=false;btn.textContent='Invitar';
-    showToast('Error al crear cuenta: '+signUpError.message,false);
+    showToast('Tu sesión expiró, vuelve a iniciar sesión',false);
     return;
   }
 
-  const nuevoUserId = signUpData?.user?.id;
-  if(!nuevoUserId){
-    btn.disabled=false;btn.textContent='Invitar';
-    showToast('No se pudo crear la cuenta, intenta de nuevo',false);
-    return;
-  }
-
-  // Supabase no devuelve error si el email ya estaba registrado (para evitar
-  // enumeración de usuarios): signUp() regresa un "user" sin crear nada nuevo.
-  // Señal típica de esto: identities vacío en la respuesta.
-  const cuentaYaExistia = Array.isArray(signUpData?.user?.identities) && signUpData.user.identities.length===0;
-
-  // Restaura la sesión del admin antes de escribir el perfil, para que el
-  // insert se ejecute con sus permisos (RLS) y no con los del usuario nuevo.
-  if (adminSession) {
-    await sb.auth.setSession({
-      access_token: adminSession.access_token,
-      refresh_token: adminSession.refresh_token,
+  let resultado;
+  try{
+    const resp = await fetch(`${SB_URL}/functions/v1/invitar-usuario`, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+adminSession.access_token,
+        'apikey': SB_KEY,
+      },
+      body: JSON.stringify({
+        nombre, email, rol,
+        medico_id: medicoId,
+        consultorios_ids: consultoriosIds,
+        permisos,
+      }),
     });
+    resultado = await resp.json();
+    if(!resp.ok){
+      throw new Error(resultado?.error || 'Error desconocido');
+    }
+  }catch(err){
+    btn.disabled=false;btn.textContent='Invitar';
+    showToast('Error al invitar: '+err.message,false);
+    return;
   }
-
-  const payloadPerfil={
-    id: nuevoUserId,
-    clinica_id: CLINICA_ID,
-    nombre, email, rol,
-    medico_id: medicoId,
-    consultorios_ids: consultoriosIds,
-    permisos,
-  };
-
-  // upsert en vez de insert: si ese id ya tiene una fila en perfiles (por un
-  // intento anterior fallido) o si la cuenta de auth ya existía, esto la
-  // actualiza en lugar de fallar.
-  const{error:perfilError}=await sb.from('perfiles').upsert(payloadPerfil);
 
   btn.disabled=false;btn.textContent='Invitar';
 
-  if(perfilError){
-    if(perfilError.message?.includes('perfiles_id_fkey')){
-      showToast('Ese email ya tiene una cuenta de acceso pero no quedó vinculada correctamente. Pide al desarrollador que revise auth.users para ese correo.',false);
-    } else {
-      showToast('Cuenta creada pero hubo un error al guardar el perfil: '+perfilError.message,false);
-    }
-    return;
-  }
-
-  if(cuentaYaExistia){
+  if(resultado.cuentaYaExistia){
     showToast(`El correo ${email} ya tenía una cuenta registrada — se actualizó su perfil con estos permisos. Si no sabe su contraseña, debe usar "¿Olvidaste tu contraseña?" en el login.`);
   } else {
     showToast(`Usuario invitado. Pídele que use "¿Olvidaste tu contraseña?" en el login con ${email} para establecer su propia contraseña.`);
