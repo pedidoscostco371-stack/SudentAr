@@ -206,16 +206,16 @@ textarea{resize:vertical;min-height:72px;}
     <div class="logo-clinica" id="sidebar-clinica-nombre">Cargando...</div>
   </div>
   <span class="nav-label">Principal</span>
-  <button class="nav-item active" onclick="switchView('dashboard',this)">
+  <button class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard',this)">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
   </button>
-  <button class="nav-item" onclick="switchView('pacientes',this)">
+  <button class="nav-item" id="nav-pacientes" onclick="switchView('pacientes',this)">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Pacientes
   </button>
-  <button class="nav-item" onclick="switchView('citas',this)">
+  <button class="nav-item" id="nav-citas" onclick="switchView('citas',this)">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Citas
   </button>
-  <button class="nav-item" onclick="switchView('ingresos',this)">
+  <button class="nav-item" id="nav-ingresos" onclick="switchView('ingresos',this)">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>Ingresos
   </button>
   <span class="nav-label" id="nav-label-config" style="display:none">Configuración</span>
@@ -316,9 +316,9 @@ textarea{resize:vertical;min-height:72px;}
     <div class="stat-card"><div class="stat-val" id="bal-mes">—</div><div class="stat-lbl">Balance del mes</div></div>
   </div>
   <div class="filter-bar">
-    <input type="date" id="ing-desde"><input type="date" id="ing-hasta">
-    <select id="filtro-cons-ing"><option value="">Todos los consultorios</option></select>
-    <button class="btn btn-ghost btn-sm" onclick="renderMovimientos()">Filtrar</button>
+    <input type="text" id="ing-buscar" placeholder="Buscar por folio, paciente o monto..." oninput="renderMovimientos()" style="min-width:220px">
+    <input type="date" id="ing-desde" onchange="renderMovimientos()"><input type="date" id="ing-hasta" onchange="renderMovimientos()">
+    <select id="filtro-cons-ing" onchange="renderMovimientos()"><option value="">Todos los consultorios</option></select>
   </div>
   <div class="card"><div class="card-header"><span class="card-title">Movimientos</span></div>
     <div id="lista-movs"><div class="empty">Cargando...</div></div>
@@ -364,21 +364,41 @@ textarea{resize:vertical;min-height:72px;}
 <!-- MI CLÍNICA -->
 <div id="view-clinica" class="view">
   <div class="page-header">
-    <div><div class="page-title">Mi Clínica</div><div class="page-sub">Datos generales del consultorio</div></div>
-    <button class="btn btn-primary" onclick="guardarClinica()">Guardar cambios</button>
+    <div><div class="page-title">Mi Clínica</div><div class="page-sub">Datos generales, usuarios y permisos</div></div>
   </div>
-  <div class="card">
-    <div class="modal-body" style="padding:24px">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Nombre de la clínica *</label><input type="text" id="cl-nombre"></div>
-        <div class="form-group"><label class="form-label">Nombre comercial</label><input type="text" id="cl-nombre-comercial" placeholder="Nombre que aparece en el sistema"></div>
-        <div class="form-group"><label class="form-label">Razón social</label><input type="text" id="cl-razon"></div>
-        <div class="form-group"><label class="form-label">RFC</label><input type="text" id="cl-rfc"></div>
-        <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="cl-tel"></div>
-        <div class="form-group"><label class="form-label">Email de contacto</label><input type="email" id="cl-email"></div>
-        <div class="form-group full"><label class="form-label">Dirección</label><input type="text" id="cl-dir"></div>
-        <div class="form-group"><label class="form-label">Responsable</label><input type="text" id="cl-responsable"></div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(this,'cl-tab-datos')">Datos Generales</button>
+    <button class="tab-btn" id="tab-btn-usuarios" onclick="switchTab(this,'cl-tab-usuarios');renderUsuarios()" style="display:none">Usuarios y Permisos</button>
+  </div>
+
+  <div id="cl-tab-datos" class="tab-pane active">
+    <div class="card">
+      <div class="modal-body" style="padding:24px">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Nombre de la clínica *</label><input type="text" id="cl-nombre"></div>
+          <div class="form-group"><label class="form-label">Nombre comercial</label><input type="text" id="cl-nombre-comercial" placeholder="Nombre que aparece en el sistema"></div>
+          <div class="form-group"><label class="form-label">Razón social</label><input type="text" id="cl-razon"></div>
+          <div class="form-group"><label class="form-label">RFC</label><input type="text" id="cl-rfc"></div>
+          <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="cl-tel"></div>
+          <div class="form-group"><label class="form-label">Email de contacto</label><input type="email" id="cl-email"></div>
+          <div class="form-group full"><label class="form-label">Dirección</label><input type="text" id="cl-dir"></div>
+          <div class="form-group"><label class="form-label">Responsable</label><input type="text" id="cl-responsable"></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-primary" onclick="guardarClinica()">Guardar cambios</button>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <div id="cl-tab-usuarios" class="tab-pane">
+    <div class="page-header" style="margin-bottom:14px">
+      <div></div>
+      <button class="btn btn-primary btn-sm" onclick="abrirInvitarUsuario()">+ Invitar usuario</button>
+    </div>
+    <div class="card">
+      <table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Accesos</th><th></th></tr></thead>
+      <tbody id="tbl-usuarios"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table>
     </div>
   </div>
 </div>
@@ -619,6 +639,76 @@ textarea{resize:vertical;min-height:72px;}
 </div>
 </div>
 
+<!-- USUARIO — PERMISOS -->
+<div class="modal-overlay" id="modal-usuario-permisos">
+<div class="modal modal-md">
+  <div class="modal-header"><span class="modal-title" id="up-title">Permisos de Usuario</span><button class="modal-close" onclick="closeModal('modal-usuario-permisos')">✕</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="up-user-id">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="up-nombre" disabled style="background:var(--s2)"></div>
+      <div class="form-group"><label class="form-label">Rol</label>
+        <select id="up-rol" onchange="toggleCamposRolPermisos()">
+          <option value="admin_clinica">Administrador de clínica</option>
+          <option value="asistente">Asistente</option>
+          <option value="odontologo">Médico</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="up-wrap-medico" style="display:none">
+      <div class="section-sep" style="margin-top:14px">Vínculo con ficha de médico</div>
+      <div class="form-group">
+        <label class="form-label">¿Qué médico de la lista es esta persona? *</label>
+        <select id="up-medico-id"><option value="">— Seleccionar médico —</option></select>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Esto conecta su cuenta de acceso con su ficha en Médicos, para mostrarle solo sus propios pacientes y citas.</div>
+      </div>
+    </div>
+
+    <div id="up-wrap-consultorios" style="display:none">
+      <div class="section-sep" style="margin-top:14px">Consultorios con acceso</div>
+      <div id="up-cons-checks" class="check-list"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Si no seleccionas ninguno, podrá ver todos los consultorios.</div>
+    </div>
+
+    <div class="section-sep" style="margin-top:14px">Módulos visibles</div>
+    <div id="up-modulos-checks" class="check-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+
+    <div id="up-wrap-ingresos-toggle" style="display:none;margin-top:14px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border)">
+        <input type="checkbox" id="up-ver-ingresos" style="width:auto;accent-color:var(--purple)">
+        Puede ver sus propios ingresos / pagos generados
+      </label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-usuario-permisos')">Cancelar</button>
+    <button class="btn btn-primary" id="btn-save-up" onclick="guardarPermisosUsuario()">Guardar Permisos</button>
+  </div>
+</div>
+</div>
+
+<!-- INVITAR USUARIO -->
+<div class="modal-overlay" id="modal-invitar-usuario">
+<div class="modal modal-sm">
+  <div class="modal-header"><span class="modal-title">Invitar Usuario</span><button class="modal-close" onclick="closeModal('modal-invitar-usuario')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Nombre completo *</label><input type="text" id="iu-nombre"></div>
+    <div class="form-group"><label class="form-label">Email *</label><input type="email" id="iu-email"></div>
+    <div class="form-group"><label class="form-label">Rol *</label>
+      <select id="iu-rol"><option value="asistente">Asistente</option><option value="odontologo">Médico</option><option value="admin_clinica">Administrador de clínica</option></select>
+    </div>
+    <div style="font-size:12px;color:var(--muted);background:var(--s2);padding:10px 12px;border-radius:8px;margin-top:6px">
+      Se creará la cuenta con una contraseña temporal. Después de invitarlo, podrás configurar sus permisos específicos desde la lista de usuarios.
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-invitar-usuario')">Cancelar</button>
+    <button class="btn btn-primary" id="btn-invitar" onclick="invitarUsuario()">Invitar</button>
+  </div>
+</div>
+</div>
+
 <!-- HISTORIA CLÍNICA — NOTA DE PROCEDIMIENTO -->
 <div class="modal-overlay" id="modal-hc-nota">
 <div class="modal modal-md">
@@ -667,10 +757,23 @@ let _pacs=[], _citas=[], _pagos=[], _cons=[], _meds=[], _horarios=[], _clinicaDa
 let _currentPacId=null;
 let _hc=[]; // notas de historia clínica del paciente actual
 let _odoSel=[]; // piezas seleccionadas actualmente en el odontograma (multi-select)
+let _usuarios=[]; // perfiles de la clínica (para Usuarios y Permisos)
+const MODULOS_DISPONIBLES=[
+  {id:'dashboard',label:'Dashboard'},
+  {id:'pacientes',label:'Pacientes'},
+  {id:'citas',label:'Citas'},
+  {id:'ingresos',label:'Ingresos'},
+  {id:'consultorios',label:'Consultorios'},
+  {id:'medicos',label:'Médicos'},
+  {id:'horarios',label:'Horarios'},
+  {id:'clinica',label:'Mi Clínica'},
+];
 
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+let USER_MEDICO_ID=null, USER_PERMISOS={};
+
 async function init() {
   const { data:{ session } } = await sb.auth.getSession();
   if (!session) { window.location.replace('/login'); return; }
@@ -681,6 +784,8 @@ async function init() {
   USER_ROL   = perfil.rol;
   USER_NOMBRE = perfil.nombre || perfil.email;
   USER_CONS  = perfil.consultorios_ids || [];
+  USER_MEDICO_ID = perfil.medico_id || null;
+  USER_PERMISOS = perfil.permisos || {};
   _clinicaData = perfil.clinicas;
 
   document.getElementById('user-nombre').textContent = USER_NOMBRE;
@@ -689,20 +794,53 @@ async function init() {
   document.getElementById('sidebar-clinica-nombre').textContent = clinicaNombre;
   document.title = 'SudentAr — ' + clinicaNombre;
 
-  if (['admin_sistema','admin_clinica'].includes(USER_ROL)) {
-    ['nav-consultorios','nav-medicos','nav-horarios','nav-clinica','nav-label-config'].forEach(id => {
-      const el=document.getElementById(id); if(el) el.style.display='';
-    });
-  } else if (USER_ROL === 'asistente') {
-    ['nav-horarios','nav-label-config'].forEach(id => {
-      const el=document.getElementById(id); if(el) el.style.display='';
-    });
-  }
+  aplicarVisibilidadModulos();
 
   await cargarTodo();
   setFechasHoy();
   cargarDatosClinica();
   renderAll();
+}
+
+// ══════════════════════════════════════════════
+// VISIBILIDAD DE MÓDULOS SEGÚN ROL Y PERMISOS INDIVIDUALES
+// ══════════════════════════════════════════════
+function aplicarVisibilidadModulos(){
+  // admin_sistema y admin_clinica: ven todo, sin restricciones
+  if (['admin_sistema','admin_clinica'].includes(USER_ROL)) {
+    ['nav-consultorios','nav-medicos','nav-horarios','nav-clinica','nav-label-config'].forEach(id => {
+      const el=document.getElementById(id); if(el) el.style.display='';
+    });
+    const tabUsuarios=document.getElementById('tab-btn-usuarios');
+    if(tabUsuarios)tabUsuarios.style.display='';
+    window._MODULOS_VISIBLES = MODULOS_DISPONIBLES.map(m=>m.id);
+    return;
+  }
+
+  // asistente / odontologo: depende de permisos.modulos definidos por el admin
+  // Si no hay permisos configurados aún, se usa un set por defecto según el rol
+  let modulosVisibles = USER_PERMISOS.modulos;
+  if (!modulosVisibles || !modulosVisibles.length) {
+    modulosVisibles = USER_ROL==='odontologo'
+      ? ['dashboard','pacientes','citas']
+      : ['dashboard','pacientes','citas','ingresos','horarios'];
+  }
+
+  const navIdPorModulo = {
+    dashboard:'nav-dashboard', pacientes:'nav-pacientes', citas:'nav-citas', ingresos:'nav-ingresos',
+    consultorios:'nav-consultorios', medicos:'nav-medicos',
+    horarios:'nav-horarios', clinica:'nav-clinica',
+  };
+
+  Object.entries(navIdPorModulo).forEach(([modulo,navId])=>{
+    const el=document.getElementById(navId);
+    if(el)el.style.display = modulosVisibles.includes(modulo)?'':'none';
+  });
+  if(['horarios','consultorios','medicos','clinica'].some(m=>modulosVisibles.includes(m))){
+    const lbl=document.getElementById('nav-label-config');if(lbl)lbl.style.display='';
+  }
+
+  window._MODULOS_VISIBLES = modulosVisibles;
 }
 
 async function cargarTodo() {
@@ -721,12 +859,30 @@ async function cargarTodo() {
   _meds     = r5.data||[];
   _horarios = r6.data||[];
 
+  // MÉDICO: solo sus propios pacientes y citas (vinculado vía perfiles.medico_id)
   if (USER_ROL==='odontologo') {
-    _citas = _citas.filter(c=>c.medico_id===USER_ID);
-    _pacs  = _pacs.filter(p=>p.medico_id===USER_ID);
+    if (USER_MEDICO_ID) {
+      _citas = _citas.filter(c=>c.medico_id===USER_MEDICO_ID);
+      _pacs  = _pacs.filter(p=>p.medico_id===USER_MEDICO_ID);
+      // Ingresos: solo si el admin le dio el permiso explícito ver_ingresos
+      if (USER_PERMISOS.ver_ingresos) {
+        _pagos = _pagos.filter(pg => _pacs.some(p=>p.id===pg.paciente_id));
+      } else {
+        _pagos = [];
+      }
+    } else {
+      // Cuenta de médico aún sin vincular a su ficha — por seguridad no se le muestra nada
+      // hasta que el administrador la configure desde Mi Clínica → Usuarios y Permisos.
+      _citas = []; _pacs = []; _pagos = [];
+    }
   }
+
+  // ASISTENTE: filtra por los consultorios a los que tiene acceso
   if (USER_ROL==='asistente' && USER_CONS.length) {
     _citas = _citas.filter(c=>USER_CONS.includes(c.consultorio_id));
+    // Los pacientes no tienen consultorio_id propio, así que se dejan visibles todos
+    // (su filtrado real ocurre vía las citas y pagos restringidos por consultorio)
+    _pagos = _pagos.filter(pg=>!pg.consultorio_id || USER_CONS.includes(pg.consultorio_id));
   }
 }
 
@@ -740,6 +896,9 @@ function renderAll() {
   renderMedicos();
   renderHorarios();
   renderKPIs();
+  if (USER_ROL==='odontologo' && !USER_MEDICO_ID) {
+    showToast('Tu cuenta de médico aún no está vinculada a tu ficha. Pide al administrador de la clínica que la configure en Mi Clínica → Usuarios y Permisos.', false);
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1458,6 +1617,8 @@ async function guardarCita(){
     btn.disabled=false;btn.textContent='Agendar Cita';
     if(error){showToast('Error: '+error.message,false);return;}
     _citas.push(data);showToast('Cita agendada');
+    const pac=getPac(pacId);
+    if(pac?.email)enviarEmailCitaAgendada(data,pac);
   }
   closeModal('modal-cita');renderCitas();cargarCitasDia();renderKPIs();
 }
@@ -1534,10 +1695,21 @@ function renderMovimientos(){
   const desde=document.getElementById('ing-desde')?.value||'';
   const hasta=document.getElementById('ing-hasta')?.value||'';
   const cons=document.getElementById('filtro-cons-ing')?.value||'';
+  const q=(document.getElementById('ing-buscar')?.value||'').trim().toLowerCase();
   let movs=[..._pagos];
   if(desde)movs=movs.filter(m=>m.fecha>=desde);
   if(hasta)movs=movs.filter(m=>m.fecha<=hasta);
   if(cons)movs=movs.filter(m=>m.consultorio_id===cons);
+  if(q){
+    movs=movs.filter(m=>{
+      const pac=getPac(m.paciente_id);
+      const folio=(m.folio||'').toLowerCase();
+      const folioCorto=folio.slice(-4);
+      const nombre=(pac?.nombre||'').toLowerCase();
+      const monto=String(m.monto||'');
+      return folio.includes(q)||folioCorto===q||nombre.includes(q)||monto.includes(q);
+    });
+  }
   const mes=new Date().toISOString().substring(0,7);
   const mm=movs.filter(m=>m.fecha?.startsWith(mes));
   const ing=mm.filter(m=>m.tipo!=='egreso').reduce((s,m)=>s+Number(m.monto),0);
@@ -1549,13 +1721,13 @@ function renderMovimientos(){
   balEl.textContent=fmtMoney(bal);
   balEl.style.color=bal>=0?'var(--green)':'var(--red)';
   const el=document.getElementById('lista-movs');
-  if(!movs.length){el.innerHTML='<div class="empty">Sin movimientos registrados</div>';return;}
+  if(!movs.length){el.innerHTML=`<div class="empty">${q?'Sin resultados para tu búsqueda':'Sin movimientos registrados'}</div>`;return;}
   el.innerHTML=movs.map(m=>{
     const pac=getPac(m.paciente_id),co=getCons(m.consultorio_id);
     const esEgr=m.tipo==='egreso';
     return`<div class="mov-item">
       <div>
-        <div class="mov-desc">${m.concepto||m.servicio||m.tipo||'—'}</div>
+        <div class="mov-desc">${m.concepto||m.servicio||m.tipo||'—'} ${m.folio?`<span class="badge bgr" style="margin-left:6px;font-weight:700">${m.folio}</span>`:''}</div>
         <div class="mov-meta">${fmtDate(m.fecha)} · ${m.forma_pago||'—'} · ${co?.nombre||'General'}</div>
         ${pac?`<div class="mov-meta">Paciente: ${pac.nombre}</div>`:''}
         <div class="mov-meta">Registró: ${m.creado_por_nombre||'—'}</div>
@@ -1563,24 +1735,6 @@ function renderMovimientos(){
       <div class="mov-amt ${esEgr?'egr':'ing'}">${esEgr?'−':'+'} ${fmtMoney(m.monto)}</div>
     </div>`;
   }).join('');
-}
-
-async function guardarIngreso(){
-  const monto=parseFloat(document.getElementById('ing-monto').value);
-  if(!monto||monto<=0)return showToast('Ingresa un monto válido',false);
-  const{data,error}=await sb.from('pagos').insert({
-    clinica_id:CLINICA_ID,
-    paciente_id:document.getElementById('ing-pac').value||null,
-    consultorio_id:document.getElementById('ing-cons').value||null,
-    tipo:document.getElementById('ing-tipo').value,monto,
-    forma_pago:document.getElementById('ing-forma').value,
-    concepto:document.getElementById('ing-concepto').value||null,
-    fecha:document.getElementById('ing-fecha').value||todayStr(),
-    notas:document.getElementById('ing-notas').value||null,
-    creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
-  }).select().single();
-  if(error){showToast('Error: '+error.message,false);return;}
-  _pagos.unshift(data);closeModal('modal-nuevo-ingreso');renderMovimientos();showToast('Ingreso registrado');
 }
 
 async function guardarEgreso(){
@@ -1612,23 +1766,6 @@ function abrirAbono(pacId,tipo){
   document.getElementById('abo-fecha').value=todayStr();
   document.getElementById('abo-notas').value='';
   closeModal('modal-detalle');openModal('modal-abono');
-}
-
-async function guardarAbono(){
-  const monto=parseFloat(document.getElementById('abo-monto').value);
-  if(!monto||monto<=0)return showToast('Ingresa un monto válido',false);
-  const pacId=document.getElementById('abo-pac-id').value;
-  const{data,error}=await sb.from('pagos').insert({
-    clinica_id:CLINICA_ID,paciente_id:pacId,tipo:'abono',monto,
-    forma_pago:document.getElementById('abo-forma').value,
-    concepto:document.getElementById('abo-concepto').value||null,
-    fecha:document.getElementById('abo-fecha').value||todayStr(),
-    notas:document.getElementById('abo-notas').value||null,
-    creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
-  }).select().single();
-  if(error){showToast('Error: '+error.message,false);return;}
-  _pagos.unshift(data);closeModal('modal-abono');renderMovimientos();showToast('Pago registrado');
-  verPaciente(pacId);
 }
 
 // ══════════════════════════════════════════════
@@ -1888,8 +2025,187 @@ async function guardarClinica(){
 }
 
 // ══════════════════════════════════════════════
-// ARCHIVOS
+// USUARIOS Y PERMISOS
 // ══════════════════════════════════════════════
+async function renderUsuarios(){
+  const tbody=document.getElementById('tbl-usuarios');
+  tbody.innerHTML='<tr><td colspan="5"><div class="empty">Cargando...</div></td></tr>';
+  const{data,error}=await sb.from('perfiles').select('*').eq('clinica_id',CLINICA_ID).order('nombre');
+  if(error){tbody.innerHTML=`<tr><td colspan="5"><div class="empty">Error al cargar usuarios</div></td></tr>`;return;}
+  _usuarios=data||[];
+  if(!_usuarios.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty">Sin usuarios registrados</div></td></tr>`;return;}
+  const rolLabel={admin_sistema:'Admin Sistema',admin_clinica:'Administrador',asistente:'Asistente',odontologo:'Médico'};
+  tbody.innerHTML=_usuarios.map(u=>{
+    const permisos=u.permisos||{};
+    const modulos=permisos.modulos;
+    const resumen = u.rol==='admin_clinica'
+      ? 'Acceso completo'
+      : (modulos&&modulos.length ? `${modulos.length} módulo${modulos.length>1?'s':''}` : 'Por configurar');
+    const medVinc = u.rol==='odontologo' ? (getMed(u.medico_id)?.nombre || '<span style="color:var(--red)">Sin vincular</span>') : '';
+    return`<tr>
+      <td><strong>${u.nombre||'—'}</strong>${medVinc?`<div style="font-size:11px;color:var(--muted)">Médico: ${medVinc}</div>`:''}</td>
+      <td style="font-size:12px">${u.email||'—'}</td>
+      <td><span class="badge ${u.rol==='admin_clinica'?'bp':u.rol==='odontologo'?'bt':'bgr'}">${rolLabel[u.rol]||u.rol}</span></td>
+      <td style="font-size:12px">${resumen}</td>
+      <td>${u.rol!=='admin_sistema'&&u.id!==USER_ID?`<button class="btn btn-ghost btn-sm" onclick="abrirPermisosUsuario('${u.id}')">Configurar</button>`:'<span style="font-size:11px;color:var(--muted)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleCamposRolPermisos(){
+  const rol=document.getElementById('up-rol').value;
+  document.getElementById('up-wrap-medico').style.display = rol==='odontologo'?'':'none';
+  document.getElementById('up-wrap-consultorios').style.display = rol==='asistente'?'':'none';
+  document.getElementById('up-wrap-ingresos-toggle').style.display = rol==='odontologo'?'':'none';
+}
+
+function abrirPermisosUsuario(userId){
+  const u=_usuarios.find(x=>x.id===userId);if(!u)return;
+  document.getElementById('up-user-id').value=u.id;
+  document.getElementById('up-nombre').value=u.nombre||u.email||'—';
+  document.getElementById('up-title').textContent='Permisos de '+(u.nombre||u.email);
+  document.getElementById('up-rol').value=u.rol;
+  toggleCamposRolPermisos();
+
+  // Selector de médico vinculado
+  const medSel=document.getElementById('up-medico-id');
+  medSel.innerHTML='<option value="">— Seleccionar médico —</option>'+_meds.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('');
+  medSel.value=u.medico_id||'';
+
+  // Checkboxes de consultorios
+  const consWrap=document.getElementById('up-cons-checks');
+  const consSel=u.consultorios_ids||[];
+  consWrap.innerHTML=_cons.map(c=>`
+    <label>
+      <input type="checkbox" class="up-cons-chk" value="${c.id}" ${consSel.includes(c.id)?'checked':''} style="width:auto;accent-color:var(--purple)">
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${c.color||'#888'};flex-shrink:0;display:inline-block"></span>
+        ${c.nombre}
+      </span>
+    </label>`).join('') || '<div style="font-size:12px;color:var(--muted)">No hay consultorios registrados aún.</div>';
+
+  // Checkboxes de módulos
+  const permisos=u.permisos||{};
+  const modulosSel=permisos.modulos||(u.rol==='odontologo'?['dashboard','pacientes','citas']:['dashboard','pacientes','citas','ingresos','horarios']);
+  const modWrap=document.getElementById('up-modulos-checks');
+  modWrap.innerHTML=MODULOS_DISPONIBLES.map(m=>`
+    <label>
+      <input type="checkbox" class="up-mod-chk" value="${m.id}" ${modulosSel.includes(m.id)?'checked':''} style="width:auto;accent-color:var(--purple)">
+      <span>${m.label}</span>
+    </label>`).join('');
+
+  document.getElementById('up-ver-ingresos').checked = !!permisos.ver_ingresos;
+
+  openModal('modal-usuario-permisos');
+}
+
+async function guardarPermisosUsuario(){
+  const userId=document.getElementById('up-user-id').value;
+  const rol=document.getElementById('up-rol').value;
+  const medicoId=rol==='odontologo' ? (document.getElementById('up-medico-id').value||null) : null;
+
+  if(rol==='odontologo' && !medicoId){
+    return showToast('Selecciona a qué médico corresponde esta cuenta',false);
+  }
+
+  const consultoriosIds = rol==='asistente'
+    ? [...document.querySelectorAll('.up-cons-chk:checked')].map(c=>c.value)
+    : [];
+
+  const modulos=[...document.querySelectorAll('.up-mod-chk:checked')].map(c=>c.value);
+  if(!modulos.length){
+    return showToast('Selecciona al menos un módulo visible',false);
+  }
+
+  const permisos={
+    modulos,
+    ver_ingresos: rol==='odontologo' ? document.getElementById('up-ver-ingresos').checked : true,
+  };
+
+  const payload={
+    rol,
+    medico_id: medicoId,
+    consultorios_ids: consultoriosIds,
+    permisos,
+  };
+
+  const btn=document.getElementById('btn-save-up');
+  btn.disabled=true;btn.textContent='Guardando...';
+  const{error}=await sb.from('perfiles').update(payload).eq('id',userId);
+  btn.disabled=false;btn.textContent='Guardar Permisos';
+  if(error){showToast('Error: '+error.message,false);return;}
+
+  const idx=_usuarios.findIndex(u=>u.id===userId);
+  if(idx>=0)_usuarios[idx]={..._usuarios[idx],...payload};
+
+  closeModal('modal-usuario-permisos');
+  renderUsuarios();
+  showToast('Permisos actualizados');
+}
+
+function abrirInvitarUsuario(){
+  document.getElementById('iu-nombre').value='';
+  document.getElementById('iu-email').value='';
+  document.getElementById('iu-rol').value='asistente';
+  openModal('modal-invitar-usuario');
+}
+
+async function invitarUsuario(){
+  const nombre=document.getElementById('iu-nombre').value.trim();
+  const email=document.getElementById('iu-email').value.trim();
+  const rol=document.getElementById('iu-rol').value;
+  if(!nombre)return showToast('Ingresa el nombre',false);
+  if(!email)return showToast('Ingresa el email',false);
+
+  const btn=document.getElementById('btn-invitar');
+  btn.disabled=true;btn.textContent='Invitando...';
+
+  // Genera una contraseña temporal aleatoria; el usuario deberá usar
+  // "¿Olvidaste tu contraseña?" en el login para establecer la suya.
+  const tempPassword = 'Sudent' + Math.random().toString(36).slice(-8);
+
+  const { data: signUpData, error: signUpError } = await sb.auth.signUp({
+    email, password: tempPassword,
+  });
+
+  if(signUpError){
+    btn.disabled=false;btn.textContent='Invitar';
+    showToast('Error al crear cuenta: '+signUpError.message,false);
+    return;
+  }
+
+  const nuevoUserId = signUpData?.user?.id;
+  if(!nuevoUserId){
+    btn.disabled=false;btn.textContent='Invitar';
+    showToast('No se pudo crear la cuenta, intenta de nuevo',false);
+    return;
+  }
+
+  const permisosDefault = {
+    modulos: rol==='odontologo' ? ['dashboard','pacientes','citas'] : ['dashboard','pacientes','citas','ingresos','horarios'],
+    ver_ingresos: false,
+  };
+
+  const{error:perfilError}=await sb.from('perfiles').insert({
+    id: nuevoUserId,
+    clinica_id: CLINICA_ID,
+    nombre, email, rol,
+    permisos: permisosDefault,
+  });
+
+  btn.disabled=false;btn.textContent='Invitar';
+
+  if(perfilError){
+    showToast('Cuenta creada pero hubo un error al guardar el perfil: '+perfilError.message,false);
+    return;
+  }
+
+  closeModal('modal-invitar-usuario');
+  showToast(`Usuario invitado. Pídele que use "¿Olvidaste tu contraseña?" en el login con ${email} para establecer su propia contraseña.`);
+  renderUsuarios();
+}
+
+
 function subirArchivo(pacId,input){
   showToast('Función de archivos disponible próximamente');
 }
@@ -2031,6 +2347,7 @@ function mostrarComprobante(pago, paciente) {
       </div>
 
       <!-- BOTONES ENVÍO -->
+      ${paciente?.email?`<div style="font-size:11px;color:var(--green);text-align:center;margin-bottom:10px">✓ Comprobante enviado automáticamente a ${paciente.email}</div>`:''}
       <div style="display:flex;flex-direction:column;gap:10px">
         ${waLink ? `
         <a href="${waLink}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#25D366;color:#fff;border-radius:9px;font-weight:600;font-size:14px;text-decoration:none;font-family:'DM Sans',sans-serif">
@@ -2042,7 +2359,7 @@ function mostrarComprobante(pago, paciente) {
         <button onclick="enviarEmailComprobante(${JSON.stringify(pago).replace(/"/g,'&quot;')}, '${paciente.id}')" 
           style="display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:var(--purple);color:#fff;border-radius:9px;font-weight:600;font-size:14px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif" id="btn-send-email">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
-          Enviar por email
+          Reenviar comprobante por email
         </button>` : `<div style="font-size:12px;color:var(--muted);text-align:center">Sin email registrado para enviar comprobante</div>`}
       </div>
     </div>
@@ -2054,20 +2371,36 @@ function mostrarComprobante(pago, paciente) {
   modal.classList.add('open');
 }
 
-async function enviarEmailComprobante(pago, pacId) {
-  const paciente = getPac(pacId);
-  if (!paciente?.email) return showToast('Sin email registrado', false);
-  const btn = document.getElementById('btn-send-email');
-  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+// ══════════════════════════════════════════════
+// ENVÍO GENÉRICO DE EMAIL VÍA RESEND
+// ══════════════════════════════════════════════
+async function enviarEmailResend(destinatario, asunto, html, remitenteNombre) {
+  const clinicaNombre = remitenteNombre || _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `${clinicaNombre} <${EMAIL_FROM}>`,
+        to: [destinatario],
+        subject: asunto,
+        html,
+      }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Error al enviar email');
+    return { ok: true, result };
+  } catch (err) {
+    console.error('Error enviando email:', err);
+    return { ok: false, error: err.message };
+  }
+}
 
-  const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
-  const esTratamiento = paciente.tipo === 'tratamiento';
-  const pagadoTotal = _pagos
-    .filter(pg => pg.paciente_id == paciente.id && pg.tipo !== 'egreso')
-    .reduce((s,pg) => s + Number(pg.monto), 0);
-  const saldo = esTratamiento ? Math.max(0, Number(paciente.costo_total||0) - pagadoTotal) : 0;
-
-  const htmlEmail = `
+function htmlEmailBase(clinicaNombre, tituloHeader, subtituloHeader, contenidoHTML, footerExtra){
+  return `
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><style>
@@ -2090,8 +2423,58 @@ async function enviarEmailComprobante(pago, pacId) {
 <div class="container">
   <div class="header">
     <h1>${clinicaNombre}</h1>
-    <p>Comprobante de pago</p>
+    <p>${subtituloHeader}</p>
   </div>
+  ${contenidoHTML}
+  <div class="footer">${footerExtra||`Este mensaje fue generado por ${clinicaNombre} a través de SudentAr.`}</div>
+</div>
+</body></html>`;
+}
+
+// ══════════════════════════════════════════════
+// EMAIL AUTOMÁTICO — confirmación de cita agendada
+// ══════════════════════════════════════════════
+async function enviarEmailCitaAgendada(cita, paciente) {
+  if (!paciente?.email) return; // silencioso si no hay email
+  const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
+  const cons = getCons(cita.consultorio_id);
+  const med = getMed(cita.medico_id);
+  const contenido = `
+  <div class="body" style="padding-top:20px">
+    <div class="row"><span class="label">Paciente</span><strong>${paciente.nombre}</strong></div>
+    <div class="row"><span class="label">Fecha</span><span>${fmtDate(cita.fecha)}</span></div>
+    <div class="row"><span class="label">Hora</span><span>${cita.hora?.substring(0,5)||'—'}</span></div>
+    <div class="row"><span class="label">Tipo</span><span>${cita.tipo}</span></div>
+    <div class="row"><span class="label">Consultorio</span><span>${cons?.nombre||'—'}</span></div>
+    <div class="row"><span class="label">Médico</span><span>${med?.nombre||'—'}</span></div>
+    ${cons?.direccion?`<div class="row"><span class="label">Dirección</span><span>${cons.direccion}</span></div>`:''}
+  </div>`;
+  const html = htmlEmailBase(
+    clinicaNombre,
+    clinicaNombre,
+    'Confirmación de cita',
+    contenido,
+    `Si necesitas reagendar o cancelar, comunícate con nosotros.<br>${clinicaNombre} vía SudentAr.`
+  );
+  await enviarEmailResend(
+    paciente.email,
+    `Cita agendada — ${fmtDate(cita.fecha)} ${cita.hora?.substring(0,5)||''} — ${clinicaNombre}`,
+    html
+  );
+}
+
+// ══════════════════════════════════════════════
+// EMAIL AUTOMÁTICO — comprobante de pago (silencioso)
+// ══════════════════════════════════════════════
+async function enviarEmailComprobanteAuto(pago, paciente) {
+  if (!paciente?.email) return; // silencioso si no hay email
+  const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
+  const esTratamiento = paciente.tipo === 'tratamiento';
+  const pagadoTotal = _pagos
+    .filter(pg => pg.paciente_id == paciente.id && pg.tipo !== 'egreso')
+    .reduce((s,pg) => s + Number(pg.monto), 0);
+  const saldo = esTratamiento ? Math.max(0, Number(paciente.costo_total||0) - pagadoTotal) : 0;
+  const contenido = `
   <div class="folio-box">
     <div class="folio-label">Folio</div>
     <div class="folio-num">${pago.folio}</div>
@@ -2110,40 +2493,25 @@ async function enviarEmailComprobante(pago, pacId) {
       <span>Monto recibido</span>
       <span style="color:#2D7A4F">${fmtMoney(pago.monto)}</span>
     </div>
-  </div>
-  <div class="footer">Este es un comprobante generado por ${clinicaNombre} a través de SudentAr.<br>Conserve este documento para sus registros.</div>
-</div>
-</body></html>`;
+  </div>`;
+  const html = htmlEmailBase(clinicaNombre, clinicaNombre, 'Comprobante de pago', contenido,
+    `Este es un comprobante generado por ${clinicaNombre} a través de SudentAr.<br>Conserve este documento para sus registros.`);
+  await enviarEmailResend(paciente.email, `Comprobante de pago ${pago.folio} — ${clinicaNombre}`, html);
+}
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: `${clinicaNombre} <${EMAIL_FROM}>`,
-        to: [paciente.email],
-        subject: `Comprobante de pago ${pago.folio} — ${clinicaNombre}`,
-        html: htmlEmail,
-      }),
-    });
-    const result = await res.json();
-    if (res.ok) {
-      showToast('Email enviado correctamente');
-      if (btn) { btn.textContent = '✓ Email enviado'; }
-    } else {
-      throw new Error(result.message || 'Error al enviar');
-    }
-  } catch (err) {
-    showToast('Error al enviar email: ' + err.message, false);
-    if (btn) { btn.disabled = false; btn.textContent = 'Reintentar envío'; }
-  }
+async function enviarEmailComprobante(pago, pacId) {
+  const paciente = getPac(pacId);
+  if (!paciente?.email) return showToast('Sin email registrado', false);
+  const btn = document.getElementById('btn-send-email');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+  const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
+  await enviarEmailComprobanteAuto(pago, paciente);
+  showToast('Email enviado correctamente');
+  if (btn) { btn.textContent = '✓ Email enviado'; }
 }
 
 // ══════════════════════════════════════════════
-// REEMPLAZAR guardarAbono CON FOLIO + COMPROBANTE
+// guardarAbono — con folio + comprobante
 // ══════════════════════════════════════════════
 async function guardarAbono() {
   const monto = parseFloat(document.getElementById('abo-monto').value);
@@ -2172,13 +2540,15 @@ async function guardarAbono() {
   closeModal('modal-abono');
   renderMovimientos();
   showToast('Pago registrado · Folio ' + folio);
-  // Mostrar comprobante
+  // Envío automático de comprobante por email (silencioso, no bloquea la UI)
+  if (paciente?.email) enviarEmailComprobanteAuto(data, paciente);
+  // Mostrar comprobante (para WhatsApp y reenvío manual si se requiere)
   mostrarComprobante(data, paciente);
   verPaciente(pacId);
 }
 
 // ══════════════════════════════════════════════
-// REEMPLAZAR guardarIngreso CON FOLIO + COMPROBANTE
+// guardarIngreso — con folio + comprobante
 // ══════════════════════════════════════════════
 async function guardarIngreso() {
   const monto = parseFloat(document.getElementById('ing-monto').value);
@@ -2208,7 +2578,10 @@ async function guardarIngreso() {
   closeModal('modal-nuevo-ingreso');
   renderMovimientos();
   showToast('Ingreso registrado · Folio ' + folio);
-  if (paciente) mostrarComprobante(data, paciente);
+  if (paciente) {
+    if (paciente.email) enviarEmailComprobanteAuto(data, paciente);
+    mostrarComprobante(data, paciente);
+  }
 }
 
 // ══════════════════════════════════════════════
