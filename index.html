@@ -819,7 +819,26 @@ function cargarCitasDia() {
   el.innerHTML=citas.map(c=>{
     const pac=getPac(c.paciente_id),cons=getCons(c.consultorio_id),med=getMed(c.medico_id);
     const col=cons?.color||'#DDD9ED';
-    const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br'}[c.estado]||'bgr';
+    const estadoLabel={'no-se-presento':'no asistió'}[c.estado]||c.estado;
+    const bp={pendiente:'by',confirmada:'bg',atendida:'bt',cancelada:'br','no-se-presento':'br'}[c.estado]||'bgr';
+    const esTrat=pac?.tipo==='tratamiento';
+    let acciones='';
+    if(c.estado==='pendiente'){
+      acciones+=`<button class="btn btn-ghost btn-sm" onclick="confirmarCita('${c.id}')">Confirmar</button>`;
+    }
+    if(c.estado==='pendiente'||c.estado==='confirmada'){
+      acciones+=`<div style="display:flex;gap:4px;margin-top:3px">
+        <button class="btn btn-sm" style="background:var(--teal-l);color:#1A7A7A;border:none;white-space:nowrap"
+          onclick="marcarAtendida('${c.id}','${pac?.id||''}',${esTrat})">✓ Atendida</button>
+        <button class="btn btn-sm" style="background:var(--red-l);color:var(--red);border:none;white-space:nowrap"
+          onclick="marcarNoAsistio('${c.id}')">✗ No asistió</button>
+      </div>`;
+    }
+    if(c.estado==='atendida'){
+      const label=esTrat?'+ Registrar abono':'+ Registrar pago';
+      const fn=esTrat?`abrirAbonoDesdeDAsh('${pac?.id||''}')`:`abrirPagoDesdeDAsh('${pac?.id||''}')`;
+      acciones=`<button class="btn btn-sm" style="background:var(--purple-l);color:var(--purple);border:none;white-space:nowrap" onclick="${fn}">${label}</button>`;
+    }
     return`<div class="cita-item" style="border-left:3px solid ${col}">
       <div class="cita-hora">${c.hora?.substring(0,5)||'—'}</div>
       <div class="cita-info">
@@ -827,9 +846,9 @@ function cargarCitasDia() {
         <div class="cita-det">${c.tipo} · ${cons?.nombre||'—'} · ${med?.nombre||'—'}</div>
         ${c.notas?`<div class="cita-det">${c.notas}</div>`:''}
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        <span class="badge ${bp}">${c.estado}</span>
-        ${c.estado==='pendiente'?`<button class="btn btn-ghost btn-sm" onclick="confirmarCita('${c.id}')">Confirmar</button>`:''}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="badge ${bp}">${estadoLabel}</span>
+        ${acciones}
       </div>
     </div>`;
   }).join('');
@@ -1178,6 +1197,47 @@ async function confirmarCita(id){
   if(error){showToast('Error: '+error.message,false);return;}
   const c=_citas.find(x=>x.id==id);if(c)c.estado='confirmada';
   renderCitas();cargarCitasDia();renderKPIs();showToast('Cita confirmada');
+}
+
+async function marcarAtendida(citaId,pacId,esTrat){
+  const{error}=await sb.from('citas').update({estado:'atendida'}).eq('id',citaId);
+  if(error){showToast('Error: '+error.message,false);return;}
+  const c=_citas.find(x=>x.id==citaId);if(c)c.estado='atendida';
+  renderCitas();renderKPIs();showToast('Cita marcada como atendida');
+  // Mostrar botón pago — solo actualizamos la lista para que aparezca
+  cargarCitasDia();
+}
+
+async function marcarNoAsistio(citaId){
+  const{error}=await sb.from('citas').update({estado:'no-se-presento'}).eq('id',citaId);
+  if(error){showToast('Error: '+error.message,false);return;}
+  const c=_citas.find(x=>x.id==citaId);if(c)c.estado='no-se-presento';
+  renderCitas();cargarCitasDia();renderKPIs();showToast('Cita marcada como no asistió');
+}
+
+function abrirAbonoDesdeDAsh(pacId){
+  // Abrir modal de abono pre-llenado con el paciente
+  const pac=getPac(pacId);if(!pac)return;
+  document.getElementById('abo-pac-id').value=pacId;
+  document.getElementById('abo-tipo-pac').value='tratamiento';
+  document.getElementById('abo-title').textContent='Registrar Abono — '+pac.nombre;
+  document.getElementById('abo-monto').value='';
+  document.getElementById('abo-concepto').value='Abono a tratamiento';
+  document.getElementById('abo-notas').value='';
+  document.getElementById('abo-fecha').value=todayStr();
+  openModal('modal-abono');
+}
+
+function abrirPagoDesdeDAsh(pacId){
+  // Abrir modal de pago (ingreso) pre-llenado
+  const pac=getPac(pacId);if(!pac)return;
+  document.getElementById('ing-pac').value=pacId;
+  document.getElementById('ing-tipo').value='visita';
+  document.getElementById('ing-concepto').value='Pago por consulta';
+  document.getElementById('ing-monto').value='';
+  document.getElementById('ing-notas').value='';
+  document.getElementById('ing-fecha').value=todayStr();
+  openModal('modal-nuevo-ingreso');
 }
 
 // ══════════════════════════════════════════════
