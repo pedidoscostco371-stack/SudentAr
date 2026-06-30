@@ -2291,6 +2291,11 @@ async function invitarUsuario(){
     return;
   }
 
+  // Supabase no devuelve error si el email ya estaba registrado (para evitar
+  // enumeración de usuarios): signUp() regresa un "user" sin crear nada nuevo.
+  // Señal típica de esto: identities vacío en la respuesta.
+  const cuentaYaExistia = Array.isArray(signUpData?.user?.identities) && signUpData.user.identities.length===0;
+
   // Restaura la sesión del admin antes de escribir el perfil, para que el
   // insert se ejecute con sus permisos (RLS) y no con los del usuario nuevo.
   if (adminSession) {
@@ -2300,24 +2305,37 @@ async function invitarUsuario(){
     });
   }
 
-  const{error:perfilError}=await sb.from('perfiles').insert({
+  const payloadPerfil={
     id: nuevoUserId,
     clinica_id: CLINICA_ID,
     nombre, email, rol,
     medico_id: medicoId,
     consultorios_ids: consultoriosIds,
     permisos,
-  });
+  };
+
+  // upsert en vez de insert: si ese id ya tiene una fila en perfiles (por un
+  // intento anterior fallido) o si la cuenta de auth ya existía, esto la
+  // actualiza en lugar de fallar.
+  const{error:perfilError}=await sb.from('perfiles').upsert(payloadPerfil);
 
   btn.disabled=false;btn.textContent='Invitar';
 
   if(perfilError){
-    showToast('Cuenta creada pero hubo un error al guardar el perfil: '+perfilError.message,false);
+    if(perfilError.message?.includes('perfiles_id_fkey')){
+      showToast('Ese email ya tiene una cuenta de acceso pero no quedó vinculada correctamente. Pide al desarrollador que revise auth.users para ese correo.',false);
+    } else {
+      showToast('Cuenta creada pero hubo un error al guardar el perfil: '+perfilError.message,false);
+    }
     return;
   }
 
+  if(cuentaYaExistia){
+    showToast(`El correo ${email} ya tenía una cuenta registrada — se actualizó su perfil con estos permisos. Si no sabe su contraseña, debe usar "¿Olvidaste tu contraseña?" en el login.`);
+  } else {
+    showToast(`Usuario invitado. Pídele que use "¿Olvidaste tu contraseña?" en el login con ${email} para establecer su propia contraseña.`);
+  }
   closeModal('modal-invitar-usuario');
-  showToast(`Usuario invitado. Pídele que use "¿Olvidaste tu contraseña?" en el login con ${email} para establecer su propia contraseña.`);
   renderUsuarios();
 }
 
