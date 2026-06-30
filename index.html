@@ -690,16 +690,44 @@ textarea{resize:vertical;min-height:72px;}
 
 <!-- INVITAR USUARIO -->
 <div class="modal-overlay" id="modal-invitar-usuario">
-<div class="modal modal-sm">
+<div class="modal modal-md">
   <div class="modal-header"><span class="modal-title">Invitar Usuario</span><button class="modal-close" onclick="closeModal('modal-invitar-usuario')">✕</button></div>
   <div class="modal-body">
-    <div class="form-group"><label class="form-label">Nombre completo *</label><input type="text" id="iu-nombre"></div>
-    <div class="form-group"><label class="form-label">Email *</label><input type="email" id="iu-email"></div>
-    <div class="form-group"><label class="form-label">Rol *</label>
-      <select id="iu-rol"><option value="asistente">Asistente</option><option value="odontologo">Médico</option><option value="admin_clinica">Administrador de clínica</option></select>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Nombre completo *</label><input type="text" id="iu-nombre"></div>
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="iu-email"></div>
+      <div class="form-group"><label class="form-label">Rol *</label>
+        <select id="iu-rol" onchange="toggleCamposRolInvitar()"><option value="asistente">Asistente</option><option value="odontologo">Médico</option><option value="admin_clinica">Administrador de clínica</option></select>
+      </div>
     </div>
-    <div style="font-size:12px;color:var(--muted);background:var(--s2);padding:10px 12px;border-radius:8px;margin-top:6px">
-      Se creará la cuenta con una contraseña temporal. Después de invitarlo, podrás configurar sus permisos específicos desde la lista de usuarios.
+
+    <div id="iu-wrap-medico" style="display:none">
+      <div class="section-sep" style="margin-top:14px">Vínculo con ficha de médico</div>
+      <div class="form-group">
+        <label class="form-label">¿Qué médico de la lista es esta persona? *</label>
+        <select id="iu-medico-id"><option value="">— Seleccionar médico —</option></select>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Esto conecta su cuenta de acceso con su ficha en Médicos, para mostrarle solo sus propios pacientes, citas y horarios.</div>
+      </div>
+    </div>
+
+    <div id="iu-wrap-consultorios" style="display:none">
+      <div class="section-sep" style="margin-top:14px">Consultorios con acceso</div>
+      <div id="iu-cons-checks" class="check-list"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Si no seleccionas ninguno, podrá ver todos los consultorios.</div>
+    </div>
+
+    <div class="section-sep" style="margin-top:14px">Módulos visibles</div>
+    <div id="iu-modulos-checks" class="check-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+
+    <div id="iu-wrap-ingresos-toggle" style="display:none;margin-top:14px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border)">
+        <input type="checkbox" id="iu-ver-ingresos" style="width:auto;accent-color:var(--purple)">
+        Puede ver sus propios ingresos / pagos generados
+      </label>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted);background:var(--s2);padding:10px 12px;border-radius:8px;margin-top:14px">
+      Se creará la cuenta con una contraseña temporal. El usuario deberá usar "¿Olvidaste tu contraseña?" en el login para establecer la suya.
     </div>
   </div>
   <div class="modal-footer">
@@ -859,11 +887,12 @@ async function cargarTodo() {
   _meds     = r5.data||[];
   _horarios = r6.data||[];
 
-  // MÉDICO: solo sus propios pacientes y citas (vinculado vía perfiles.medico_id)
+  // MÉDICO: solo sus propios pacientes, citas y horarios (vinculado vía perfiles.medico_id)
   if (USER_ROL==='odontologo') {
     if (USER_MEDICO_ID) {
       _citas = _citas.filter(c=>c.medico_id===USER_MEDICO_ID);
       _pacs  = _pacs.filter(p=>p.medico_id===USER_MEDICO_ID);
+      _horarios = _horarios.filter(h=>h.medico_id===USER_MEDICO_ID);
       // Ingresos: solo si el admin le dio el permiso explícito ver_ingresos
       if (USER_PERMISOS.ver_ingresos) {
         _pagos = _pagos.filter(pg => _pacs.some(p=>p.id===pg.paciente_id));
@@ -873,7 +902,7 @@ async function cargarTodo() {
     } else {
       // Cuenta de médico aún sin vincular a su ficha — por seguridad no se le muestra nada
       // hasta que el administrador la configure desde Mi Clínica → Usuarios y Permisos.
-      _citas = []; _pacs = []; _pagos = [];
+      _citas = []; _pacs = []; _pagos = []; _horarios = [];
     }
   }
 
@@ -983,7 +1012,13 @@ function poblarSelects() {
   const ingPac=document.getElementById('ing-pac');
   if(ingPac)ingPac.innerHTML=pacNone;
   const horMed=document.getElementById('hor-med-id');
-  if(horMed)horMed.innerHTML='<option value="">— Seleccionar —</option>'+medOpts;
+  if(horMed){
+    const medOptsHor = (USER_ROL==='odontologo' && USER_MEDICO_ID)
+      ? _meds.filter(m=>m.id===USER_MEDICO_ID).map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('')
+      : medOpts;
+    horMed.innerHTML='<option value="">— Seleccionar —</option>'+medOptsHor;
+    if(USER_ROL==='odontologo' && USER_MEDICO_ID){horMed.value=USER_MEDICO_ID;horMed.disabled=true;}
+  }
 
   // Checkboxes médico-consultorios
   actualizarChecksMedCons();
@@ -1945,16 +1980,22 @@ function renderHorarios(){
 function abrirModalHorario(){
   document.getElementById('hor-edit-id').value='';
   document.getElementById('hor-modal-title').textContent='Agregar Horario';
-  document.getElementById('hor-med-id').value='';
   document.getElementById('hor-cons-id').innerHTML='<option value="">— Seleccionar —</option>';
   document.getElementById('hor-dia').value='1';
   document.getElementById('hor-inicio').value='09:00';
   document.getElementById('hor-fin').value='14:00';
+  if (USER_ROL==='odontologo' && USER_MEDICO_ID) {
+    document.getElementById('hor-med-id').value=USER_MEDICO_ID;
+    filtrarConsultoriosMedico();
+  } else {
+    document.getElementById('hor-med-id').value='';
+  }
   openModal('modal-horario');
 }
 
 async function guardarHorario(){
-  const medId=document.getElementById('hor-med-id').value;
+  let medId=document.getElementById('hor-med-id').value;
+  if (USER_ROL==='odontologo' && USER_MEDICO_ID) medId=USER_MEDICO_ID;
   const consId=document.getElementById('hor-cons-id').value;
   const dia=document.getElementById('hor-dia').value;
   const inicio=document.getElementById('hor-inicio').value;
@@ -1975,13 +2016,21 @@ async function guardarHorario(){
 }
 
 async function toggleHorario(id,activo){
+  const h=_horarios.find(x=>x.id==id);
+  if (USER_ROL==='odontologo' && USER_MEDICO_ID && h && h.medico_id!==USER_MEDICO_ID) {
+    return showToast('No puedes modificar horarios de otro médico',false);
+  }
   const{error}=await sb.from('horarios').update({activo:!activo}).eq('id',id);
   if(error){showToast('Error: '+error.message,false);return;}
-  const h=_horarios.find(x=>x.id==id);if(h)h.activo=!activo;
+  if(h)h.activo=!activo;
   renderHorarios();showToast(activo?'Horario desactivado':'Horario activado');
 }
 
 async function eliminarHorario(id){
+  const h=_horarios.find(x=>x.id==id);
+  if (USER_ROL==='odontologo' && USER_MEDICO_ID && h && h.medico_id!==USER_MEDICO_ID) {
+    return showToast('No puedes eliminar horarios de otro médico',false);
+  }
   if(!confirm('¿Eliminar este horario?'))return;
   const{error}=await sb.from('horarios').delete().eq('id',id);
   if(error){showToast('Error: '+error.message,false);return;}
@@ -2144,10 +2193,45 @@ async function guardarPermisosUsuario(){
   showToast('Permisos actualizados');
 }
 
+function toggleCamposRolInvitar(){
+  const rol=document.getElementById('iu-rol').value;
+  document.getElementById('iu-wrap-medico').style.display = rol==='odontologo'?'':'none';
+  document.getElementById('iu-wrap-consultorios').style.display = rol==='asistente'?'':'none';
+  document.getElementById('iu-wrap-ingresos-toggle').style.display = rol==='odontologo'?'':'none';
+}
+
 function abrirInvitarUsuario(){
   document.getElementById('iu-nombre').value='';
   document.getElementById('iu-email').value='';
   document.getElementById('iu-rol').value='asistente';
+
+  // Selector de médico vinculado
+  const medSel=document.getElementById('iu-medico-id');
+  medSel.innerHTML='<option value="">— Seleccionar médico —</option>'+_meds.map(m=>`<option value="${m.id}">${m.nombre}</option>`).join('');
+
+  // Checkboxes de consultorios
+  const consWrap=document.getElementById('iu-cons-checks');
+  consWrap.innerHTML=_cons.map(c=>`
+    <label>
+      <input type="checkbox" class="iu-cons-chk" value="${c.id}" style="width:auto;accent-color:var(--purple)">
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${c.color||'#888'};flex-shrink:0;display:inline-block"></span>
+        ${c.nombre}
+      </span>
+    </label>`).join('') || '<div style="font-size:12px;color:var(--muted)">No hay consultorios registrados aún.</div>';
+
+  // Checkboxes de módulos (default para asistente)
+  const modulosSel=['dashboard','pacientes','citas','ingresos','horarios'];
+  const modWrap=document.getElementById('iu-modulos-checks');
+  modWrap.innerHTML=MODULOS_DISPONIBLES.map(m=>`
+    <label>
+      <input type="checkbox" class="iu-mod-chk" value="${m.id}" ${modulosSel.includes(m.id)?'checked':''} style="width:auto;accent-color:var(--purple)">
+      <span>${m.label}</span>
+    </label>`).join('');
+
+  document.getElementById('iu-ver-ingresos').checked = false;
+
+  toggleCamposRolInvitar();
   openModal('modal-invitar-usuario');
 }
 
@@ -2158,8 +2242,33 @@ async function invitarUsuario(){
   if(!nombre)return showToast('Ingresa el nombre',false);
   if(!email)return showToast('Ingresa el email',false);
 
+  const medicoId=rol==='odontologo' ? (document.getElementById('iu-medico-id').value||null) : null;
+  if(rol==='odontologo' && !medicoId){
+    return showToast('Selecciona a qué médico corresponde esta cuenta',false);
+  }
+
+  const consultoriosIds = rol==='asistente'
+    ? [...document.querySelectorAll('.iu-cons-chk:checked')].map(c=>c.value)
+    : [];
+
+  const modulos=[...document.querySelectorAll('.iu-mod-chk:checked')].map(c=>c.value);
+  if(!modulos.length){
+    return showToast('Selecciona al menos un módulo visible',false);
+  }
+
+  const permisos={
+    modulos,
+    ver_ingresos: rol==='odontologo' ? document.getElementById('iu-ver-ingresos').checked : true,
+  };
+
   const btn=document.getElementById('btn-invitar');
   btn.disabled=true;btn.textContent='Invitando...';
+
+  // Guarda la sesión actual del admin: sb.auth.signUp() cambia la sesión activa
+  // del cliente a la del usuario recién creado, lo cual rompería el insert
+  // posterior (se ejecutaría como el usuario nuevo, no como el admin) y dejaría
+  // al admin desconectado de su propia sesión. La restauramos justo después.
+  const { data: { session: adminSession } } = await sb.auth.getSession();
 
   // Genera una contraseña temporal aleatoria; el usuario deberá usar
   // "¿Olvidaste tu contraseña?" en el login para establecer la suya.
@@ -2182,16 +2291,22 @@ async function invitarUsuario(){
     return;
   }
 
-  const permisosDefault = {
-    modulos: rol==='odontologo' ? ['dashboard','pacientes','citas'] : ['dashboard','pacientes','citas','ingresos','horarios'],
-    ver_ingresos: false,
-  };
+  // Restaura la sesión del admin antes de escribir el perfil, para que el
+  // insert se ejecute con sus permisos (RLS) y no con los del usuario nuevo.
+  if (adminSession) {
+    await sb.auth.setSession({
+      access_token: adminSession.access_token,
+      refresh_token: adminSession.refresh_token,
+    });
+  }
 
   const{error:perfilError}=await sb.from('perfiles').insert({
     id: nuevoUserId,
     clinica_id: CLINICA_ID,
     nombre, email, rol,
-    permisos: permisosDefault,
+    medico_id: medicoId,
+    consultorios_ids: consultoriosIds,
+    permisos,
   });
 
   btn.disabled=false;btn.textContent='Invitar';
