@@ -16,7 +16,8 @@
   .brand-tagline{color:rgba(255,255,255,0.75);font-size:16px;line-height:1.6;max-width:300px;position:relative;z-index:1;margin-bottom:48px;}
   .brand-features{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px;}
   .brand-feat{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,0.85);font-size:14px;}
-  .brand-feat-icon{width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .brand-feat-icon{width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .brand-feat-icon svg{width:16px;height:16px;stroke:rgba(255,255,255,0.9);fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
   .right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 32px;}
   .login-card{width:100%;max-width:380px;}
   .login-title{font-family:'Nunito',sans-serif;font-size:26px;font-weight:800;color:#1A1730;margin-bottom:6px;}
@@ -36,7 +37,44 @@
   .admin-link{text-align:center;font-size:12px;color:#7A748F;}
   .admin-link a{color:#3B2D8F;text-decoration:none;font-weight:600;}
   #reset-view{display:none;}
-  @media(max-width:768px){.left{display:none;}.right{padding:32px 20px;}}
+  /* ── Móvil ── */
+  @media(max-width:768px){
+    body{flex-direction:column;background:#fff;}
+    .left{
+      width:100%;
+      padding:36px 24px 32px;
+      border-radius:0 0 28px 28px;
+      align-items:flex-start;
+    }
+    .left::before{width:220px;height:220px;top:-60px;right:-50px;}
+    .left::after{width:160px;height:160px;bottom:-40px;left:-30px;}
+    .brand-logo{font-size:32px;margin-bottom:8px;}
+    .brand-tagline{font-size:14px;margin-bottom:28px;max-width:100%;}
+    .brand-features{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      width:100%;
+    }
+    .brand-feat{
+      background:rgba(255,255,255,0.1);
+      border-radius:10px;
+      padding:10px 12px;
+      gap:8px;
+      font-size:12.5px;
+    }
+    .brand-feat-icon{width:26px;height:26px;flex-shrink:0;}
+    .brand-feat-icon svg{width:13px;height:13px;}
+    .right{
+      padding:28px 20px 40px;
+      align-items:flex-start;
+    }
+    .login-card{max-width:100%;}
+    .login-title{font-size:22px;}
+  }
+  @media(max-width:380px){
+    .brand-features{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
@@ -45,11 +83,31 @@
   <div class="brand-logo">SudentAr</div>
   <div class="brand-tagline">Gestión inteligente para tu clínica dental. Seguro, en la nube, siempre disponible.</div>
   <div class="brand-features">
-    <div class="brand-feat"><div class="brand-feat-icon">📅</div>Agenda y citas sin conflictos</div>
-    <div class="brand-feat"><div class="brand-feat-icon">🦷</div>Expediente clínico completo</div>
-    <div class="brand-feat"><div class="brand-feat-icon">💰</div>Control de pagos y saldos</div>
-    <div class="brand-feat"><div class="brand-feat-icon">🔒</div>Tus datos, solo tuyos</div>
-    <div class="brand-feat"><div class="brand-feat-icon">📱</div>Desde cualquier dispositivo</div>
+    <div class="brand-feat">
+      <div class="brand-feat-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>Agenda y citas sin conflictos
+    </div>
+    <div class="brand-feat">
+      <div class="brand-feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C9 2 7 4.5 7 7c0 3.5 2.5 5.5 4 6.3V15h2v-1.7c1.5-.8 4-2.8 4-6.3 0-2.5-2-5-5-5z"/><path d="M9 17h6l.5 3H8.5L9 17z"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
+      </div>Expediente clínico completo
+    </div>
+    <div class="brand-feat">
+      <div class="brand-feat-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+      </div>Control de pagos y saldos
+    </div>
+    <div class="brand-feat">
+      <div class="brand-feat-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>Tus datos, solo tuyos
+    </div>
+    <div class="brand-feat">
+      <div class="brand-feat-icon">
+        <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      </div>Desde cualquier dispositivo
+    </div>
   </div>
 </div>
 
