@@ -15,8 +15,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error("FALTAN VARIABLES DE ENTORNO:", {
+    tieneUrl: !!SUPABASE_URL,
+    tieneServiceKey: !!SERVICE_ROLE_KEY,
+  });
+}
+
 // Cliente con permisos de administrador (nunca se expone al navegador)
-const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
 
 Deno.serve(async (req) => {
   // CORS básico
@@ -61,6 +70,8 @@ Deno.serve(async (req) => {
           callerEmail: callerUser.email,
           dbError: callerPerfilError?.message || null,
           dbErrorCode: callerPerfilError?.code || null,
+          tieneServiceRoleKey: !!SERVICE_ROLE_KEY,
+          tieneUrl: !!SUPABASE_URL,
         },
       }, 403);
     }
@@ -77,7 +88,7 @@ Deno.serve(async (req) => {
       return json({ error: "Faltan campos requeridos (nombre, email, rol)" }, 400);
     }
 
-    const ROLES_VALIDOS = ["admin_sistema", "admin_clinica", "odontologo", "recepcion"];
+    const ROLES_VALIDOS = ["admin_sistema", "admin_clinica", "odontologo", "asistente"];
     if (!ROLES_VALIDOS.includes(rol)) {
       return json({ error: "Rol inválido: " + rol }, 400);
     }
@@ -128,7 +139,10 @@ Deno.serve(async (req) => {
     });
 
     if (perfilError) {
-      return json({ error: "Cuenta creada pero error al guardar perfil: " + perfilError.message }, 500);
+      return json({
+        error: "Cuenta creada pero error al guardar perfil: " + perfilError.message,
+        debug: { rolEnviado: rol, perfilErrorCode: perfilError.code },
+      }, 500);
     }
 
     return json({ ok: true, userId, cuentaYaExistia });
