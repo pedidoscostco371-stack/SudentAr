@@ -650,7 +650,7 @@ textarea{resize:vertical;min-height:72px;}
       <div class="form-group"><label class="form-label">Rol</label>
         <select id="up-rol" onchange="toggleCamposRolPermisos()">
           <option value="admin_clinica">Administrador de clínica</option>
-          <option value="asistente">Asistente</option>
+          <option value="recepcion">Asistente</option>
           <option value="odontologo">Médico</option>
         </select>
       </div>
@@ -697,7 +697,7 @@ textarea{resize:vertical;min-height:72px;}
       <div class="form-group"><label class="form-label">Nombre completo *</label><input type="text" id="iu-nombre"></div>
       <div class="form-group"><label class="form-label">Email *</label><input type="email" id="iu-email"></div>
       <div class="form-group"><label class="form-label">Rol *</label>
-        <select id="iu-rol" onchange="toggleCamposRolInvitar()"><option value="asistente">Asistente</option><option value="odontologo">Médico</option><option value="admin_clinica">Administrador de clínica</option></select>
+        <select id="iu-rol" onchange="toggleCamposRolInvitar()"><option value="recepcion">Asistente</option><option value="odontologo">Médico</option><option value="admin_clinica">Administrador de clínica</option></select>
       </div>
     </div>
 
@@ -817,7 +817,7 @@ async function init() {
   _clinicaData = perfil.clinicas;
 
   document.getElementById('user-nombre').textContent = USER_NOMBRE;
-  document.getElementById('user-rol').textContent = {admin_sistema:'Admin Sistema',admin_clinica:'Admin Clínica',asistente:'Asistente',odontologo:'Odontólogo'}[USER_ROL]||USER_ROL;
+  document.getElementById('user-rol').textContent = {admin_sistema:'Admin Sistema',admin_clinica:'Admin Clínica',recepcion:'Asistente',odontologo:'Odontólogo'}[USER_ROL]||USER_ROL;
   const clinicaNombre = _clinicaData?.nombre_comercial || _clinicaData?.nombre || '—';
   document.getElementById('sidebar-clinica-nombre').textContent = clinicaNombre;
   document.title = 'SudentAr — ' + clinicaNombre;
@@ -907,7 +907,7 @@ async function cargarTodo() {
   }
 
   // ASISTENTE: filtra por los consultorios a los que tiene acceso
-  if (USER_ROL==='asistente' && USER_CONS.length) {
+  if (USER_ROL==='recepcion' && USER_CONS.length) {
     _citas = _citas.filter(c=>USER_CONS.includes(c.consultorio_id));
     // Los pacientes no tienen consultorio_id propio, así que se dejan visibles todos
     // (su filtrado real ocurre vía las citas y pagos restringidos por consultorio)
@@ -2084,7 +2084,7 @@ async function renderUsuarios(){
   if(error){tbody.innerHTML=`<tr><td colspan="5"><div class="empty">Error al cargar usuarios</div></td></tr>`;return;}
   _usuarios=data||[];
   if(!_usuarios.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty">Sin usuarios registrados</div></td></tr>`;return;}
-  const rolLabel={admin_sistema:'Admin Sistema',admin_clinica:'Administrador',asistente:'Asistente',odontologo:'Médico'};
+  const rolLabel={admin_sistema:'Admin Sistema',admin_clinica:'Administrador',recepcion:'Asistente',odontologo:'Médico'};
   tbody.innerHTML=_usuarios.map(u=>{
     const permisos=u.permisos||{};
     const modulos=permisos.modulos;
@@ -2105,7 +2105,7 @@ async function renderUsuarios(){
 function toggleCamposRolPermisos(){
   const rol=document.getElementById('up-rol').value;
   document.getElementById('up-wrap-medico').style.display = rol==='odontologo'?'':'none';
-  document.getElementById('up-wrap-consultorios').style.display = rol==='asistente'?'':'none';
+  document.getElementById('up-wrap-consultorios').style.display = rol==='recepcion'?'':'none';
   document.getElementById('up-wrap-ingresos-toggle').style.display = rol==='odontologo'?'':'none';
 }
 
@@ -2158,7 +2158,7 @@ async function guardarPermisosUsuario(){
     return showToast('Selecciona a qué médico corresponde esta cuenta',false);
   }
 
-  const consultoriosIds = rol==='asistente'
+  const consultoriosIds = rol==='recepcion'
     ? [...document.querySelectorAll('.up-cons-chk:checked')].map(c=>c.value)
     : [];
 
@@ -2196,14 +2196,14 @@ async function guardarPermisosUsuario(){
 function toggleCamposRolInvitar(){
   const rol=document.getElementById('iu-rol').value;
   document.getElementById('iu-wrap-medico').style.display = rol==='odontologo'?'':'none';
-  document.getElementById('iu-wrap-consultorios').style.display = rol==='asistente'?'':'none';
+  document.getElementById('iu-wrap-consultorios').style.display = rol==='recepcion'?'':'none';
   document.getElementById('iu-wrap-ingresos-toggle').style.display = rol==='odontologo'?'':'none';
 }
 
 function abrirInvitarUsuario(){
   document.getElementById('iu-nombre').value='';
   document.getElementById('iu-email').value='';
-  document.getElementById('iu-rol').value='asistente';
+  document.getElementById('iu-rol').value='recepcion';
 
   // Selector de médico vinculado
   const medSel=document.getElementById('iu-medico-id');
@@ -2247,7 +2247,7 @@ async function invitarUsuario(){
     return showToast('Selecciona a qué médico corresponde esta cuenta',false);
   }
 
-  const consultoriosIds = rol==='asistente'
+  const consultoriosIds = rol==='recepcion'
     ? [...document.querySelectorAll('.iu-cons-chk:checked')].map(c=>c.value)
     : [];
 
