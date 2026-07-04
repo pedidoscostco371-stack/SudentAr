@@ -248,7 +248,7 @@
       </div>
       <div class="card">
         <table>
-          <thead><tr><th>Nombre</th><th>Email</th><th>Clínica</th><th>Rol</th><th>Estado</th><th>Registrado</th></tr></thead>
+          <thead><tr><th>Nombre</th><th>Email</th><th>Clínica</th><th>Rol</th><th>Estado</th><th>Registrado</th><th></th></tr></thead>
           <tbody id="usuarios-tbl">
             <tr><td colspan="6"><div class="empty">Cargando...</div></td></tr>
           </tbody>
@@ -351,6 +351,49 @@
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="closeModal('modal-invitar')">Cancelar</button>
       <button class="btn btn-primary" onclick="enviarInvitacion()">Enviar Invitación</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDITAR USUARIO (admin) -->
+<div class="modal-backdrop" id="modal-editar-usuario">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Editar usuario</span>
+      <button class="modal-close" onclick="closeModal('modal-editar-usuario')">✕</button>
+    </div>
+    <input type="hidden" id="eu-id">
+    <div class="form-group"><label>Nombre completo</label>
+      <input id="eu-nombre" type="text"></div>
+    <div class="form-group"><label>Rol</label>
+      <select id="eu-rol">
+        <option value="admin_clinica">Admin de clínica</option>
+        <option value="odontologo">Odontólogo</option>
+        <option value="asistente">Asistente</option>
+        <option value="recepcion">Recepción</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Estado</label>
+      <select id="eu-activo">
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Correo electrónico</label>
+      <input id="eu-email" type="email">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Cambiar el correo actualiza el acceso del usuario.</div>
+    </div>
+    <div class="form-group"><label>Nueva contraseña (opcional)</label>
+      <input id="eu-pass" type="password" placeholder="Déjalo vacío para no cambiarla">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Mínimo 8 caracteres. Solo si quieres asignarle una contraseña nueva.</div>
+    </div>
+    <div id="eu-error" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px;justify-content:space-between;align-items:center">
+      <button class="btn btn-danger btn-sm" onclick="eliminarUsuarioAdmin()">🗑 Eliminar</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="closeModal('modal-editar-usuario')">Cancelar</button>
+        <button class="btn btn-primary" id="eu-save-btn" onclick="guardarUsuarioAdmin()">Guardar cambios</button>
+      </div>
     </div>
   </div>
 </div>
@@ -480,9 +523,11 @@ async function loadClinicas() {
     </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏥</div>Sin clínicas registradas</div></td></tr>`;
 }
 
+let _usuariosAdmin = [];
 async function loadUsuarios() {
   const { data } = await sb.from('perfiles').select('*, clinicas(nombre)').order('creado_en', { ascending: false });
-  document.getElementById('usuarios-tbl').innerHTML = (data || []).map(u => `
+  _usuariosAdmin = data || [];
+  document.getElementById('usuarios-tbl').innerHTML = _usuariosAdmin.map(u => `
     <tr>
       <td><strong>${u.nombre}</strong></td>
       <td style="font-size:12px">${u.email}</td>
@@ -490,7 +535,10 @@ async function loadUsuarios() {
       <td><span class="badge badge-${u.rol === 'admin_sistema' ? 'red' : 'purple'}">${u.rol}</span></td>
       <td><span class="badge badge-${u.activo ? 'green' : 'gray'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td style="font-size:12px">${new Date(u.creado_en).toLocaleDateString('es-MX')}</td>
-    </tr>`).join('') || `<tr><td colspan="6"><div class="empty">Sin usuarios</div></td></tr>`;
+      <td>${u.rol === 'admin_sistema'
+        ? '<span style="font-size:11px;color:var(--muted)">—</span>'
+        : `<button class="btn btn-ghost btn-sm" onclick="abrirEditarUsuario('${u.id}')">Editar</button>`}</td>
+    </tr>`).join('') || `<tr><td colspan="7"><div class="empty">Sin usuarios</div></td></tr>`;
 }
 
 async function loadInvitaciones() {
@@ -641,7 +689,88 @@ function showToast(msg) {
 // ════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// EDITAR / ELIMINAR USUARIOS (vía Edge Function)
+// ════════════════════════════════════════════════
+async function gestionUsuario(action, userId, fields) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('Tu sesión expiró, vuelve a entrar'); return { ok:false }; }
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/gestionar-usuario`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+      'apikey': SUPABASE_ANON,
+    },
+    body: JSON.stringify({ action, userId, fields }),
+  });
+  const result = await resp.json();
+  if (!resp.ok) return { ok:false, error: result.error || 'Error desconocido' };
+  return { ok:true };
+}
+
+function abrirEditarUsuario(id) {
+  const u = _usuariosAdmin.find(x => x.id === id);
+  if (!u) return;
+  document.getElementById('eu-id').value     = u.id;
+  document.getElementById('eu-nombre').value = u.nombre || '';
+  document.getElementById('eu-rol').value    = u.rol || 'asistente';
+  document.getElementById('eu-activo').value = u.activo ? 'true' : 'false';
+  document.getElementById('eu-email').value  = u.email || '';
+  document.getElementById('eu-pass').value   = '';
+  document.getElementById('eu-error').textContent = '';
+  document.getElementById('eu-email').dataset.original = u.email || '';
+  openModal('modal-editar-usuario');
+}
+
+async function guardarUsuarioAdmin() {
+  const id    = document.getElementById('eu-id').value;
+  const errEl = document.getElementById('eu-error');
+  const btn   = document.getElementById('eu-save-btn');
+  const nombre = document.getElementById('eu-nombre').value.trim();
+  const rol    = document.getElementById('eu-rol').value;
+  const activo = document.getElementById('eu-activo').value === 'true';
+  const email  = document.getElementById('eu-email').value.trim();
+  const pass   = document.getElementById('eu-pass').value;
+  const emailOriginal = document.getElementById('eu-email').dataset.original;
+
+  errEl.textContent = '';
+  if (!nombre) { errEl.textContent = 'El nombre no puede estar vacío'; return; }
+  if (pass && pass.length < 8) { errEl.textContent = 'La contraseña debe tener al menos 8 caracteres'; return; }
+
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  // 1) Perfil (nombre, rol, activo)
+  let r = await gestionUsuario('update', id, { nombre, rol, activo });
+  // 2) Correo si cambió
+  if (r.ok && email && email !== emailOriginal) r = await gestionUsuario('update_email', id, { email });
+  // 3) Contraseña si se escribió
+  if (r.ok && pass) r = await gestionUsuario('set_password', id, { password: pass });
+
+  btn.disabled = false; btn.textContent = 'Guardar cambios';
+  if (!r.ok) { errEl.textContent = r.error; return; }
+
+  closeModal('modal-editar-usuario');
+  showToast('✅ Usuario actualizado');
+  loadUsuarios();
+}
+
+async function eliminarUsuarioAdmin() {
+  const id = document.getElementById('eu-id').value;
+  const u  = _usuariosAdmin.find(x => x.id === id);
+  const errEl = document.getElementById('eu-error');
+  if (!confirm(`¿Eliminar definitivamente a ${u?.nombre || 'este usuario'}?\n\nEsta acción no se puede deshacer. Si el usuario tiene pagos o citas registradas, mejor desactívalo.`)) return;
+  errEl.textContent = '';
+  const r = await gestionUsuario('delete', id, {});
+  if (!r.ok) { errEl.textContent = r.error; return; }
+  closeModal('modal-editar-usuario');
+  showToast('🗑 Usuario eliminado');
+  loadUsuarios();
+}
+
 init();
+
+
 </script>
 </body>
 </html>
