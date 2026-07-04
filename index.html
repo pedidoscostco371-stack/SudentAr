@@ -2355,7 +2355,8 @@ function cerrarDrawer() { document.getElementById('mobile-drawer').style.display
 // ══════════════════════════════════════════════
 // RESEND CONFIG
 // ══════════════════════════════════════════════
-const RESEND_KEY = 're_dAp9tj7M_8GNbkQuvcwNjh8mCyUkoKLLp';
+// La API key de Resend ya NO vive en el cliente: ahora es un secret en la Edge
+// Function `enviar-email`. Ver supabase/functions/enviar-email/index.ts
 const EMAIL_FROM = 'onboarding@resend.dev'; // Cambiar por dominio propio cuando tengas uno
 
 // ══════════════════════════════════════════════
@@ -2485,21 +2486,24 @@ function mostrarComprobante(pago, paciente) {
 async function enviarEmailResend(destinatario, asunto, html, remitenteNombre) {
   const clinicaNombre = remitenteNombre || _clinicaData?.nombre_comercial || _clinicaData?.nombre || 'SudentAr';
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('Sesión no válida');
+    const res = await fetch(`${SB_URL}/functions/v1/enviar-email`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+        'apikey': SB_KEY,
       },
       body: JSON.stringify({
-        from: `${clinicaNombre} <${EMAIL_FROM}>`,
-        to: [destinatario],
+        to: destinatario,
         subject: asunto,
         html,
+        from: `${clinicaNombre} <${EMAIL_FROM}>`,
       }),
     });
     const result = await res.json();
-    if (!res.ok) throw new Error(result.message || 'Error al enviar email');
+    if (!res.ok) throw new Error(result.error || 'Error al enviar email');
     return { ok: true, result };
   } catch (err) {
     console.error('Error enviando email:', err);

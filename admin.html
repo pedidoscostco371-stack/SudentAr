@@ -587,8 +587,31 @@ async function enviarInvitacion() {
   const link = `${location.origin}/accept-invite.html?token=${data.token}`;
   await navigator.clipboard.writeText(link).catch(() => {});
 
+  // Enviar el correo de invitación vía Edge Function `enviar-email`
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#3B2D8F">Te invitaron a SudentAr</h2>
+        <p>Fuiste invitado como <strong>${rol}</strong>. Haz clic para crear tu cuenta:</p>
+        <p><a href="${link}" style="background:#7B52CC;color:#fff;padding:12px 20px;
+          border-radius:8px;text-decoration:none;display:inline-block">Aceptar invitación</a></p>
+        <p style="color:#7A748F;font-size:12px">El enlace expira en 7 días. Si el botón no funciona,
+          copia este link:<br>${link}</p>
+      </div>`;
+    await fetch(`${SUPABASE_URL}/functions/v1/enviar-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+        'apikey': SUPABASE_ANON,
+      },
+      body: JSON.stringify({ to: email, subject: 'Invitación a SudentAr', html }),
+    });
+  } catch (e) { console.error('No se pudo enviar el correo de invitación:', e); }
+
   closeModal('modal-invitar');
-  showToast('✅ Invitación creada · Link copiado al portapapeles');
+  showToast('✅ Invitación creada · Correo enviado · Link copiado al portapapeles');
   loadInvitaciones();
 }
 
