@@ -228,7 +228,7 @@
           <div class="page-title">🏥 Clínicas</div>
           <div class="page-sub">Registra y gestiona los consultorios suscritos</div>
         </div>
-        <button class="btn btn-primary" onclick="openModal('modal-clinica')">＋ Nueva clínica</button>
+        <button class="btn btn-primary" onclick="abrirNuevaClinica()">＋ Nueva clínica</button>
       </div>
       <div class="card">
         <table>
@@ -282,9 +282,10 @@
 <div class="modal-backdrop" id="modal-clinica">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🏥 Registrar Clínica</span>
+      <span class="modal-title" id="cl-modal-title">🏥 Registrar Clínica</span>
       <button class="modal-close" onclick="closeModal('modal-clinica')">✕</button>
     </div>
+    <input type="hidden" id="cl-id">
     <div class="form-row">
       <div class="form-group"><label>Nombre del consultorio *</label>
         <input id="cl-nombre" placeholder="Ej: Consultorio GDL"></div>
@@ -321,7 +322,7 @@
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="closeModal('modal-clinica')">Cancelar</button>
-      <button class="btn btn-primary" onclick="crearClinica()">Registrar Clínica</button>
+      <button class="btn btn-primary" id="cl-save-btn" onclick="guardarClinica()">Registrar Clínica</button>
     </div>
   </div>
 </div>
@@ -505,9 +506,11 @@ async function loadDashboard() {
   }).join('') || `<tr><td colspan="5"><div class="empty">Sin clínicas registradas aún</div></td></tr>`;
 }
 
+let _clinicas = [];
 async function loadClinicas() {
   const { data } = await sb.from('clinicas').select('*').order('creado_en', { ascending: false });
-  document.getElementById('clinicas-tbl').innerHTML = (data || []).map(c => `
+  _clinicas = data || [];
+  document.getElementById('clinicas-tbl').innerHTML = _clinicas.map(c => `
     <tr>
       <td><strong>${c.nombre}</strong><br><small style="color:var(--muted)">${c.email || ''}</small></td>
       <td style="font-size:12px">${c.rfc || '—'}</td>
@@ -516,9 +519,13 @@ async function loadClinicas() {
       <td style="font-size:12px">${new Date(c.creado_en).toLocaleDateString('es-MX')}</td>
       <td><span class="badge badge-${c.activa ? 'green' : 'red'}">${c.activa ? 'Activa' : 'Inactiva'}</span></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="toggleClinica('${c.id}', ${c.activa})">
-          ${c.activa ? '⏸ Suspender' : '▶ Activar'}
-        </button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="abrirEditarClinica('${c.id}')">✏ Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleClinica('${c.id}', ${c.activa})">
+            ${c.activa ? '⏸ Suspender' : '▶ Activar'}
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarClinica('${c.id}')">🗑 Eliminar</button>
+        </div>
       </td>
     </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏥</div>Sin clínicas registradas</div></td></tr>`;
 }
@@ -598,7 +605,44 @@ function updatePlanLimits() {
   document.getElementById('plan-info').textContent = PLAN_INFO[plan];
 }
 
-async function crearClinica() {
+function abrirNuevaClinica() {
+  document.getElementById('cl-id').value = '';
+  document.getElementById('cl-nombre').value = '';
+  document.getElementById('cl-razon').value = '';
+  document.getElementById('cl-rfc').value = '';
+  document.getElementById('cl-responsable').value = '';
+  document.getElementById('cl-email').value = '';
+  document.getElementById('cl-tel').value = '';
+  document.getElementById('cl-dir').value = '';
+  document.getElementById('cl-plan').value = 'basico';
+  document.getElementById('cl-color').value = '#3BBFBF';
+  updatePlanLimits();
+  document.getElementById('cl-modal-title').textContent = '🏥 Registrar Clínica';
+  document.getElementById('cl-save-btn').textContent = 'Registrar Clínica';
+  openModal('modal-clinica');
+}
+
+function abrirEditarClinica(id) {
+  const c = _clinicas.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('cl-id').value = c.id;
+  document.getElementById('cl-nombre').value = c.nombre || '';
+  document.getElementById('cl-razon').value = c.razon_social || '';
+  document.getElementById('cl-rfc').value = c.rfc || '';
+  document.getElementById('cl-responsable').value = c.responsable || '';
+  document.getElementById('cl-email').value = c.email || '';
+  document.getElementById('cl-tel').value = c.telefono || '';
+  document.getElementById('cl-dir').value = c.direccion || '';
+  document.getElementById('cl-plan').value = c.plan || 'basico';
+  document.getElementById('cl-color').value = c.color || '#3BBFBF';
+  updatePlanLimits();
+  document.getElementById('cl-modal-title').textContent = '✏ Editar Clínica';
+  document.getElementById('cl-save-btn').textContent = 'Guardar cambios';
+  openModal('modal-clinica');
+}
+
+async function guardarClinica() {
+  const id   = document.getElementById('cl-id').value;
   const plan = document.getElementById('cl-plan').value;
   const cfg  = PLAN_CONFIG[plan];
   const payload = {
@@ -613,13 +657,59 @@ async function crearClinica() {
     plan,
     max_usuarios:  cfg.max_usuarios,
     max_pacientes: cfg.max_pacientes,
-    activa: true,
   };
   if (!payload.nombre || !payload.email) return showToast('Nombre y email son obligatorios');
-  const { error } = await sb.from('clinicas').insert(payload);
+
+  const btn = document.getElementById('cl-save-btn');
+  btn.disabled = true; const txt = btn.textContent; btn.textContent = 'Guardando...';
+
+  let error;
+  if (id) {
+    ({ error } = await sb.from('clinicas').update(payload).eq('id', id));
+  } else {
+    payload.activa = true;
+    ({ error } = await sb.from('clinicas').insert(payload));
+  }
+
+  btn.disabled = false; btn.textContent = txt;
   if (error) { showToast('Error: ' + error.message); return; }
   closeModal('modal-clinica');
-  showToast('✅ Clínica registrada correctamente');
+  showToast(id ? '✅ Clínica actualizada' : '✅ Clínica registrada correctamente');
+  loadClinicas();
+  loadDashboard();
+}
+
+async function eliminarClinica(id) {
+  const c = _clinicas.find(x => x.id === id);
+  const nombre = c?.nombre || 'esta clínica';
+
+  // Borrado seguro: bloquear si la clínica tiene datos asociados
+  const [usuarios, pacientes, citas, pagos] = await Promise.all([
+    sb.from('perfiles').select('id', { count: 'exact', head: true }).eq('clinica_id', id),
+    sb.from('pacientes').select('id', { count: 'exact', head: true }).eq('clinica_id', id),
+    sb.from('citas').select('id', { count: 'exact', head: true }).eq('clinica_id', id),
+    sb.from('pagos').select('id', { count: 'exact', head: true }).eq('clinica_id', id),
+  ]);
+  const total = (usuarios.count || 0) + (pacientes.count || 0) + (citas.count || 0) + (pagos.count || 0);
+
+  if (total > 0) {
+    alert(
+      `No se puede eliminar "${nombre}" porque todavía tiene datos:\n\n` +
+      `• Usuarios: ${usuarios.count || 0}\n` +
+      `• Pacientes: ${pacientes.count || 0}\n` +
+      `• Citas: ${citas.count || 0}\n` +
+      `• Pagos: ${pagos.count || 0}\n\n` +
+      `Para conservar el historial, mejor SUSPENDE la clínica. ` +
+      `Si de verdad quieres borrarla, primero hay que vaciar esos datos.`
+    );
+    return;
+  }
+
+  if (!confirm(`¿Eliminar definitivamente la clínica "${nombre}"?\n\nNo tiene datos asociados, así que se puede borrar. Esta acción no se puede deshacer.`)) return;
+
+  const { error } = await sb.from('clinicas').delete().eq('id', id);
+  if (error) { showToast('Error: ' + error.message); return; }
+  showToast('🗑 Clínica eliminada');
   loadClinicas();
   loadDashboard();
 }
