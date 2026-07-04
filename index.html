@@ -2376,6 +2376,12 @@ async function generarFolio() {
 // ══════════════════════════════════════════════
 // MODAL COMPROBANTE
 // ══════════════════════════════════════════════
+// Cierra el comprobante y regresa al Dashboard
+function cerrarComprobante() {
+  closeModal('modal-comprobante');
+  switchView('dashboard', document.getElementById('nav-dashboard'));
+}
+
 function mostrarComprobante(pago, paciente) {
   // Crear modal de comprobante dinámicamente
   let modal = document.getElementById('modal-comprobante');
@@ -2406,7 +2412,7 @@ function mostrarComprobante(pago, paciente) {
   <div class="modal modal-sm">
     <div class="modal-header">
       <span class="modal-title">Comprobante de Pago</span>
-      <button class="modal-close" onclick="closeModal('modal-comprobante')">✕</button>
+      <button class="modal-close" onclick="cerrarComprobante()">✕</button>
     </div>
     <div class="modal-body">
       <!-- FOLIO -->
@@ -2473,7 +2479,7 @@ function mostrarComprobante(pago, paciente) {
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-comprobante')">Cerrar</button>
+      <button class="btn btn-ghost" onclick="cerrarComprobante()">Cerrar</button>
     </div>
   </div>`;
 
@@ -2656,7 +2662,6 @@ async function guardarAbono() {
   if (paciente?.email) enviarEmailComprobanteAuto(data, paciente);
   // Mostrar comprobante (para WhatsApp y reenvío manual si se requiere)
   mostrarComprobante(data, paciente);
-  verPaciente(pacId);
 }
 
 // ══════════════════════════════════════════════
