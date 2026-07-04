@@ -647,7 +647,7 @@ textarea{resize:vertical;min-height:72px;}
   <div class="modal-body">
     <input type="hidden" id="up-user-id">
     <div class="form-grid">
-      <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="up-nombre" disabled style="background:var(--s2)"></div>
+      <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="up-nombre"></div>
       <div class="form-group"><label class="form-label">Rol</label>
         <select id="up-rol" onchange="toggleCamposRolPermisos()">
           <option value="admin_clinica">Administrador de clínica</option>
@@ -655,6 +655,12 @@ textarea{resize:vertical;min-height:72px;}
           <option value="odontologo">Médico</option>
         </select>
       </div>
+    </div>
+    <div class="form-group"><label class="form-label">Estado</label>
+      <select id="up-activo">
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select>
     </div>
 
     <div id="up-wrap-medico" style="display:none">
@@ -682,9 +688,24 @@ textarea{resize:vertical;min-height:72px;}
       </label>
     </div>
   </div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('modal-usuario-permisos')">Cancelar</button>
-    <button class="btn btn-primary" id="btn-save-up" onclick="guardarPermisosUsuario()">Guardar Permisos</button>
+  <div class="modal-body" style="padding-top:0">
+    <div class="section-sep" style="margin-top:4px">Acceso</div>
+    <div class="form-group"><label class="form-label">Correo electrónico</label>
+      <input type="email" id="up-email">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Cambiar el correo actualiza el acceso del usuario.</div>
+    </div>
+    <div class="form-group"><label class="form-label">Nueva contraseña (opcional)</label>
+      <input type="password" id="up-pass" placeholder="Déjalo vacío para no cambiarla">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Mínimo 8 caracteres. Solo si quieres asignarle una nueva.</div>
+    </div>
+    <div id="up-error" style="color:var(--red);font-size:12px;min-height:16px"></div>
+  </div>
+  <div class="modal-footer" style="justify-content:space-between">
+    <button class="btn btn-danger btn-sm" onclick="eliminarUsuarioClinica()">🗑 Eliminar</button>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-usuario-permisos')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-up" onclick="guardarPermisosUsuario()">Guardar</button>
+    </div>
   </div>
 </div>
 </div>
@@ -809,13 +830,26 @@ async function init() {
   USER_ID = session.user.id;
   const { data: perfil } = await sb.from('perfiles').select('*,clinicas(*)').eq('id', USER_ID).single();
   if (!perfil) { window.location.replace('/login'); return; }
+  _clinicaData = perfil.clinicas;
+
+  // ── Bloqueo de acceso ──
+  if (perfil.activo === false) {
+    await sb.auth.signOut();
+    window.location.replace('/login?blocked=user');
+    return;
+  }
+  if (perfil.rol !== 'admin_sistema' && _clinicaData && _clinicaData.activa === false) {
+    await sb.auth.signOut();
+    window.location.replace('/login?blocked=clinica');
+    return;
+  }
+
   CLINICA_ID = perfil.clinica_id;
   USER_ROL   = perfil.rol;
   USER_NOMBRE = perfil.nombre || perfil.email;
   USER_CONS  = perfil.consultorios_ids || [];
   USER_MEDICO_ID = perfil.medico_id || null;
   USER_PERMISOS = perfil.permisos || {};
-  _clinicaData = perfil.clinicas;
 
   document.getElementById('user-nombre').textContent = USER_NOMBRE;
   document.getElementById('user-rol').textContent = {admin_sistema:'Admin Sistema',admin_clinica:'Admin Clínica',asistente:'Asistente',odontologo:'Odontólogo'}[USER_ROL]||USER_ROL;
@@ -2098,7 +2132,7 @@ async function renderUsuarios(){
       <td style="font-size:12px">${u.email||'—'}</td>
       <td><span class="badge ${u.rol==='admin_clinica'?'bp':u.rol==='odontologo'?'bt':'bgr'}">${rolLabel[u.rol]||u.rol}</span></td>
       <td style="font-size:12px">${resumen}</td>
-      <td>${u.rol!=='admin_sistema'&&u.id!==USER_ID?`<button class="btn btn-ghost btn-sm" onclick="abrirPermisosUsuario('${u.id}')">Configurar</button>`:'<span style="font-size:11px;color:var(--muted)">—</span>'}</td>
+      <td>${u.rol!=='admin_sistema'&&u.id!==USER_ID?`<button class="btn btn-ghost btn-sm" onclick="abrirPermisosUsuario('${u.id}')">Editar</button>`:'<span style="font-size:11px;color:var(--muted)">—</span>'}</td>
     </tr>`;
   }).join('');
 }
@@ -2113,9 +2147,14 @@ function toggleCamposRolPermisos(){
 function abrirPermisosUsuario(userId){
   const u=_usuarios.find(x=>x.id===userId);if(!u)return;
   document.getElementById('up-user-id').value=u.id;
-  document.getElementById('up-nombre').value=u.nombre||u.email||'—';
-  document.getElementById('up-title').textContent='Permisos de '+(u.nombre||u.email);
+  document.getElementById('up-nombre').value=u.nombre||'';
+  document.getElementById('up-title').textContent='Usuario: '+(u.nombre||u.email);
   document.getElementById('up-rol').value=u.rol;
+  document.getElementById('up-activo').value = (u.activo===false) ? 'false' : 'true';
+  document.getElementById('up-email').value=u.email||'';
+  document.getElementById('up-email').dataset.original=u.email||'';
+  document.getElementById('up-pass').value='';
+  const upErr=document.getElementById('up-error'); if(upErr) upErr.textContent='';
   toggleCamposRolPermisos();
 
   // Selector de médico vinculado
@@ -2153,7 +2192,17 @@ function abrirPermisosUsuario(userId){
 async function guardarPermisosUsuario(){
   const userId=document.getElementById('up-user-id').value;
   const rol=document.getElementById('up-rol').value;
+  const nombre=document.getElementById('up-nombre').value.trim();
+  const activo=document.getElementById('up-activo').value==='true';
+  const email=document.getElementById('up-email').value.trim();
+  const emailOriginal=document.getElementById('up-email').dataset.original||'';
+  const pass=document.getElementById('up-pass').value;
+  const errEl=document.getElementById('up-error');
   const medicoId=rol==='odontologo' ? (document.getElementById('up-medico-id').value||null) : null;
+
+  if(errEl) errEl.textContent='';
+  if(!nombre){ if(errEl) errEl.textContent='El nombre no puede estar vacío'; return showToast('El nombre no puede estar vacío',false); }
+  if(pass && pass.length<8){ if(errEl) errEl.textContent='La contraseña debe tener al menos 8 caracteres'; return; }
 
   if(rol==='odontologo' && !medicoId){
     return showToast('Selecciona a qué médico corresponde esta cuenta',false);
@@ -2174,6 +2223,8 @@ async function guardarPermisosUsuario(){
   };
 
   const payload={
+    nombre,
+    activo,
     rol,
     medico_id: medicoId,
     consultorios_ids: consultoriosIds,
@@ -2183,15 +2234,57 @@ async function guardarPermisosUsuario(){
   const btn=document.getElementById('btn-save-up');
   btn.disabled=true;btn.textContent='Guardando...';
   const{error}=await sb.from('perfiles').update(payload).eq('id',userId);
-  btn.disabled=false;btn.textContent='Guardar Permisos';
-  if(error){showToast('Error: '+error.message,false);return;}
+  if(error){btn.disabled=false;btn.textContent='Guardar';if(errEl)errEl.textContent='Error: '+error.message;return;}
+
+  // Correo y/o contraseña: tocan Auth → vía Edge Function
+  if(email && email!==emailOriginal){
+    const r=await gestionUsuarioClinica('update_email',userId,{email});
+    if(!r.ok){btn.disabled=false;btn.textContent='Guardar';if(errEl)errEl.textContent=r.error;return;}
+  }
+  if(pass){
+    const r=await gestionUsuarioClinica('set_password',userId,{password:pass});
+    if(!r.ok){btn.disabled=false;btn.textContent='Guardar';if(errEl)errEl.textContent=r.error;return;}
+  }
+
+  btn.disabled=false;btn.textContent='Guardar';
 
   const idx=_usuarios.findIndex(u=>u.id===userId);
-  if(idx>=0)_usuarios[idx]={..._usuarios[idx],...payload};
+  if(idx>=0)_usuarios[idx]={..._usuarios[idx],...payload,email:email||_usuarios[idx].email};
 
   closeModal('modal-usuario-permisos');
   renderUsuarios();
-  showToast('Permisos actualizados');
+  showToast('Usuario actualizado');
+}
+
+// Llama a la Edge Function gestionar-usuario (correo, contraseña, eliminar)
+async function gestionUsuarioClinica(action, userId, fields){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session) return { ok:false, error:'Tu sesión expiró, vuelve a entrar' };
+  const resp = await fetch(`${SB_URL}/functions/v1/gestionar-usuario`,{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+session.access_token,
+      'apikey':SB_KEY,
+    },
+    body: JSON.stringify({ action, userId, fields }),
+  });
+  const result = await resp.json();
+  if(!resp.ok) return { ok:false, error: result.error||'Error desconocido' };
+  return { ok:true };
+}
+
+async function eliminarUsuarioClinica(){
+  const userId=document.getElementById('up-user-id').value;
+  const u=_usuarios.find(x=>x.id===userId);
+  const errEl=document.getElementById('up-error');
+  if(!confirm(`¿Eliminar definitivamente a ${u?.nombre||'este usuario'}?\n\nNo se puede deshacer. Si tiene pagos o citas, mejor desactívalo (Estado → Inactivo).`)) return;
+  if(errEl) errEl.textContent='';
+  const r=await gestionUsuarioClinica('delete',userId,{});
+  if(!r.ok){ if(errEl) errEl.textContent=r.error; return; }
+  closeModal('modal-usuario-permisos');
+  renderUsuarios();
+  showToast('Usuario eliminado');
 }
 
 function toggleCamposRolInvitar(){

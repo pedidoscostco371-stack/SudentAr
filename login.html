@@ -161,6 +161,17 @@ sb.auth.getSession().then(function(r) {
   }
 });
 
+// Mensaje si index.html rebotó al usuario por cuenta/clínica bloqueada
+(function() {
+  var motivo = new URLSearchParams(location.search).get('blocked');
+  if (!motivo) return;
+  var errEl = document.getElementById('sd-error');
+  errEl.textContent = motivo === 'clinica'
+    ? 'El acceso de tu clínica está suspendido. Contacta a SudentAr para regularizar tu cuenta.'
+    : 'Tu cuenta está desactivada. Contacta al administrador de tu clínica.';
+  errEl.style.display = 'block';
+})();
+
 // Botón login
 document.getElementById('sd-btn-login').addEventListener('click', function() {
   var email = document.getElementById('sd-email').value.trim();
@@ -182,8 +193,25 @@ document.getElementById('sd-btn-login').addEventListener('click', function() {
       errEl.style.display = 'block';
       return;
     }
-    btn.textContent = '✓ Acceso concedido';
-    window.location.href = '/index.html';
+    // Verificar estado de la cuenta y de la clínica antes de entrar
+    sb.from('perfiles').select('activo, rol, clinicas(activa)').eq('id', result.data.user.id).single().then(function(pr) {
+      var perfil = pr.data;
+      function bloquear(msg) {
+        sb.auth.signOut();
+        btn.disabled = false;
+        btn.textContent = 'Iniciar sesión';
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+      if (perfil && perfil.activo === false) {
+        return bloquear('Tu cuenta está desactivada. Contacta al administrador de tu clínica.');
+      }
+      if (perfil && perfil.rol !== 'admin_sistema' && perfil.clinicas && perfil.clinicas.activa === false) {
+        return bloquear('El acceso de tu clínica está suspendido. Contacta a SudentAr para regularizar tu cuenta.');
+      }
+      btn.textContent = '✓ Acceso concedido';
+      window.location.href = '/index.html';
+    });
   });
 });
 
