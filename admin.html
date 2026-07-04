@@ -555,7 +555,13 @@ async function loadInvitaciones() {
     return `<tr>
       <td>${inv.email}</td>
       <td style="font-size:12px">${inv.clinicas?.nombre || '—'}</td>
-      <td><span class="badge badge-purple">${inv.rol}</span></td>
+      <td>${estado === 'pendiente'
+        ? `<select onchange="cambiarRolInvitacion('${inv.id}', this.value)" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;cursor:pointer;background:#fff">
+             <option value="odontologo"${inv.rol==='odontologo'?' selected':''}>Odontólogo</option>
+             <option value="admin_clinica"${inv.rol==='admin_clinica'?' selected':''}>Admin de clínica</option>
+             <option value="recepcion"${inv.rol==='recepcion'?' selected':''}>Recepción</option>
+           </select>`
+        : `<span class="badge badge-purple">${inv.rol}</span>`}</td>
       <td><span class="badge badge-${badgeMap[estado] || 'gray'}">${estado}</span></td>
       <td style="font-size:12px">${new Date(inv.expira_en).toLocaleDateString('es-MX')}</td>
       <td>
@@ -661,6 +667,12 @@ async function enviarInvitacion() {
   closeModal('modal-invitar');
   showToast('✅ Invitación creada · Correo enviado · Link copiado al portapapeles');
   loadInvitaciones();
+}
+
+async function cambiarRolInvitacion(id, rol) {
+  const { error } = await sb.from('invitaciones').update({ rol }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message); loadInvitaciones(); return; }
+  showToast('✅ Rol de la invitación actualizado');
 }
 
 async function copiarLink(token) {
