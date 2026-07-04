@@ -541,6 +541,7 @@ async function loadUsuarios() {
     </tr>`).join('') || `<tr><td colspan="7"><div class="empty">Sin usuarios</div></td></tr>`;
 }
 
+let _invitaciones = [];
 async function loadInvitaciones() {
   // Populate clinicas select
   const { data: clinicas } = await sb.from('clinicas').select('id, nombre').eq('activa', true);
@@ -548,10 +549,12 @@ async function loadInvitaciones() {
   sel.innerHTML = (clinicas || []).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
 
   const { data } = await sb.from('invitaciones').select('*, clinicas(nombre)').order('creado_en', { ascending: false });
-  document.getElementById('invitaciones-tbl').innerHTML = (data || []).map(inv => {
+  _invitaciones = data || [];
+  document.getElementById('invitaciones-tbl').innerHTML = _invitaciones.map(inv => {
     const expirada = new Date(inv.expira_en) < new Date();
     const estado = expirada && inv.estado === 'pendiente' ? 'expirada' : inv.estado;
     const badgeMap = { pendiente: 'teal', aceptada: 'green', expirada: 'gray', cancelada: 'red' };
+    const puedeReenviar = estado === 'pendiente' || estado === 'expirada';
     return `<tr>
       <td>${inv.email}</td>
       <td style="font-size:12px">${inv.clinicas?.nombre || '—'}</td>
@@ -565,7 +568,11 @@ async function loadInvitaciones() {
       <td><span class="badge badge-${badgeMap[estado] || 'gray'}">${estado}</span></td>
       <td style="font-size:12px">${new Date(inv.expira_en).toLocaleDateString('es-MX')}</td>
       <td>
-        ${estado === 'pendiente' ? `<button class="btn btn-ghost btn-sm" onclick="copiarLink('${inv.token}')">📋 Copiar link</button>` : ''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${estado === 'pendiente' ? `<button class="btn btn-ghost btn-sm" onclick="copiarLink('${inv.token}')">📋 Link</button>` : ''}
+          ${puedeReenviar ? `<button class="btn btn-ghost btn-sm" onclick="reenviarInvitacion('${inv.id}')">✉ Reenviar</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="eliminarInvitacion('${inv.id}')">🗑 Eliminar</button>
+        </div>
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="6"><div class="empty">Sin invitaciones</div></td></tr>`;
@@ -642,6 +649,15 @@ async function enviarInvitacion() {
   await navigator.clipboard.writeText(link).catch(() => {});
 
   // Enviar el correo de invitación vía Edge Function `enviar-email`
+  await enviarCorreoInvitacion(email, rol, link);
+
+  closeModal('modal-invitar');
+  showToast('✅ Invitación creada · Correo enviado · Link copiado al portapapeles');
+  loadInvitaciones();
+}
+
+// Envía (o reenvía) el correo de invitación con el enlace
+async function enviarCorreoInvitacion(email, rol, link) {
   try {
     const { data: { session } } = await sb.auth.getSession();
     const html = `
@@ -653,7 +669,7 @@ async function enviarInvitacion() {
         <p style="color:#7A748F;font-size:12px">El enlace expira en 7 días. Si el botón no funciona,
           copia este link:<br>${link}</p>
       </div>`;
-    await fetch(`${SUPABASE_URL}/functions/v1/enviar-email`, {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/enviar-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -662,17 +678,38 @@ async function enviarInvitacion() {
       },
       body: JSON.stringify({ to: email, subject: 'Invitación a SudentAr', html }),
     });
-  } catch (e) { console.error('No se pudo enviar el correo de invitación:', e); }
-
-  closeModal('modal-invitar');
-  showToast('✅ Invitación creada · Correo enviado · Link copiado al portapapeles');
-  loadInvitaciones();
+    return resp.ok;
+  } catch (e) { console.error('No se pudo enviar el correo de invitación:', e); return false; }
 }
 
 async function cambiarRolInvitacion(id, rol) {
   const { error } = await sb.from('invitaciones').update({ rol }).eq('id', id);
   if (error) { showToast('Error: ' + error.message); loadInvitaciones(); return; }
   showToast('✅ Rol de la invitación actualizado');
+}
+
+async function reenviarInvitacion(id) {
+  const inv = _invitaciones.find(x => x.id === id);
+  if (!inv) return;
+  // Renovar vigencia 7 días y reactivar por si estaba expirada (se conserva el mismo token)
+  const nuevaExpira = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await sb.from('invitaciones')
+    .update({ expira_en: nuevaExpira, estado: 'pendiente' }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message); return; }
+
+  const link = `${location.origin}/accept-invite.html?token=${inv.token}`;
+  const ok = await enviarCorreoInvitacion(inv.email, inv.rol, link);
+  showToast(ok ? '✉ Invitación reenviada a ' + inv.email : 'La invitación se renovó, pero el correo no pudo enviarse');
+  loadInvitaciones();
+}
+
+async function eliminarInvitacion(id) {
+  const inv = _invitaciones.find(x => x.id === id);
+  if (!confirm(`¿Eliminar la invitación de ${inv?.email || 'este correo'}?\n\nSolo se borra el registro de la invitación. Si la persona ya creó su cuenta, su usuario NO se elimina (eso se hace en la sección Usuarios).`)) return;
+  const { error } = await sb.from('invitaciones').delete().eq('id', id);
+  if (error) { showToast('Error: ' + error.message); return; }
+  showToast('🗑 Invitación eliminada');
+  loadInvitaciones();
 }
 
 async function copiarLink(token) {
