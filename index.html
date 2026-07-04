@@ -44,7 +44,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .stat-val{font-size:26px;font-weight:800;font-family:'Nunito',sans-serif;color:var(--dark);}
 .stat-lbl{color:var(--muted);font-size:12px;margin-top:3px;}
 /* TABLE */
-table{width:100%;border-collapse:collapse;}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;min-width:600px;}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:10px 14px;text-align:left;background:#FAF9FD;border-bottom:1px solid var(--border);}
 td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
@@ -278,8 +279,8 @@ textarea{resize:vertical;min-height:72px;}
     <select id="filtro-medico-pac" onchange="renderPacientes()"><option value="">Todos los médicos</option></select>
   </div>
   <div class="card">
-    <table><thead><tr><th>Paciente</th><th>Teléfono</th><th>Médico</th><th>Tratamiento</th><th>Saldo</th><th>Próx. cita</th><th>Estado</th><th></th></tr></thead>
-    <tbody id="tbl-pacientes"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody></table>
+    <div class="table-scroll"><table><thead><tr><th>Paciente</th><th>Teléfono</th><th>Médico</th><th>Tratamiento</th><th>Saldo</th><th>Próx. cita</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="tbl-pacientes"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -296,8 +297,8 @@ textarea{resize:vertical;min-height:72px;}
     <select id="filtro-est-cita" onchange="renderCitas()"><option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="confirmada">Confirmada</option><option value="atendida">Atendida</option><option value="cancelada">Cancelada</option></select>
   </div>
   <div class="card">
-    <table><thead><tr><th>Fecha / Hora</th><th>Paciente</th><th>Consultorio</th><th>Médico</th><th>Tipo</th><th>Estado</th><th>Registró</th><th></th></tr></thead>
-    <tbody id="tbl-citas"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody></table>
+    <div class="table-scroll"><table><thead><tr><th>Fecha / Hora</th><th>Paciente</th><th>Consultorio</th><th>Médico</th><th>Tipo</th><th>Estado</th><th>Registró</th><th></th></tr></thead>
+    <tbody id="tbl-citas"><tr><td colspan="8"><div class="empty">Cargando...</div></td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -332,8 +333,8 @@ textarea{resize:vertical;min-height:72px;}
     <button class="btn btn-primary" onclick="abrirModalConsultorio()">+ Nuevo consultorio</button>
   </div>
   <div class="card">
-    <table><thead><tr><th>Nombre</th><th>Dirección</th><th>Teléfono</th><th>Color</th><th></th></tr></thead>
-    <tbody id="tbl-cons"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table>
+    <div class="table-scroll"><table><thead><tr><th>Nombre</th><th>Dirección</th><th>Teléfono</th><th>Color</th><th></th></tr></thead>
+    <tbody id="tbl-cons"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -344,8 +345,8 @@ textarea{resize:vertical;min-height:72px;}
     <button class="btn btn-primary" onclick="abrirModalMedico()">+ Agregar médico</button>
   </div>
   <div class="card">
-    <table><thead><tr><th>Nombre</th><th>Especialidad</th><th>Consultorios</th><th>Estado</th><th></th></tr></thead>
-    <tbody id="tbl-meds"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table>
+    <div class="table-scroll"><table><thead><tr><th>Nombre</th><th>Especialidad</th><th>Consultorios</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="tbl-meds"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -356,8 +357,8 @@ textarea{resize:vertical;min-height:72px;}
     <button class="btn btn-primary" onclick="abrirModalHorario()">+ Agregar horario</button>
   </div>
   <div class="card">
-    <table><thead><tr><th>Médico</th><th>Consultorio</th><th>Día</th><th>Horario</th><th>Estado</th><th></th></tr></thead>
-    <tbody id="tbl-horarios"><tr><td colspan="6"><div class="empty">Cargando...</div></td></tr></tbody></table>
+    <div class="table-scroll"><table><thead><tr><th>Médico</th><th>Consultorio</th><th>Día</th><th>Horario</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="tbl-horarios"><tr><td colspan="6"><div class="empty">Cargando...</div></td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -397,8 +398,8 @@ textarea{resize:vertical;min-height:72px;}
       <button class="btn btn-primary btn-sm" onclick="abrirInvitarUsuario()">+ Invitar usuario</button>
     </div>
     <div class="card">
-      <table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Accesos</th><th></th></tr></thead>
-      <tbody id="tbl-usuarios"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table>
+      <div class="table-scroll"><table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Accesos</th><th></th></tr></thead>
+      <tbody id="tbl-usuarios"><tr><td colspan="5"><div class="empty">Cargando...</div></td></tr></tbody></table></div>
     </div>
   </div>
 </div>
