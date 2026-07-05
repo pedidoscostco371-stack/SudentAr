@@ -372,6 +372,7 @@
         <option value="odontologo">Odontólogo</option>
         <option value="asistente">Asistente</option>
         <option value="recepcion">Recepción</option>
+        <option value="admin_sistema">Super Admin SudentAr</option>
       </select>
     </div>
     <div class="form-group"><label>Estado</label>
@@ -390,7 +391,7 @@
     </div>
     <div id="eu-error" style="color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px"></div>
     <div style="display:flex;gap:10px;justify-content:space-between;align-items:center">
-      <button class="btn btn-danger btn-sm" onclick="eliminarUsuarioAdmin()">🗑 Eliminar</button>
+      <button class="btn btn-danger btn-sm" id="eu-del-btn" onclick="eliminarUsuarioAdmin()">🗑 Eliminar</button>
       <div style="display:flex;gap:10px">
         <button class="btn btn-ghost" onclick="closeModal('modal-editar-usuario')">Cancelar</button>
         <button class="btn btn-primary" id="eu-save-btn" onclick="guardarUsuarioAdmin()">Guardar cambios</button>
@@ -534,18 +535,21 @@ let _usuariosAdmin = [];
 async function loadUsuarios() {
   const { data } = await sb.from('perfiles').select('*, clinicas(nombre)').order('creado_en', { ascending: false });
   _usuariosAdmin = data || [];
-  document.getElementById('usuarios-tbl').innerHTML = _usuariosAdmin.map(u => `
+  document.getElementById('usuarios-tbl').innerHTML = _usuariosAdmin.map(u => {
+    const esSuper = u.rol === 'admin_sistema';
+    const rolLabel = esSuper ? 'Super Admin SudentAr' : u.rol;
+    const clinicaLabel = esSuper ? 'SudentAr' : (u.clinicas?.nombre || '—');
+    return `
     <tr>
       <td><strong>${u.nombre}</strong></td>
       <td style="font-size:12px">${u.email}</td>
-      <td style="font-size:12px">${u.clinicas?.nombre || '—'}</td>
-      <td><span class="badge badge-${u.rol === 'admin_sistema' ? 'red' : 'purple'}">${u.rol}</span></td>
+      <td style="font-size:12px">${clinicaLabel}</td>
+      <td><span class="badge badge-${esSuper ? 'red' : 'purple'}">${rolLabel}</span></td>
       <td><span class="badge badge-${u.activo ? 'green' : 'gray'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td style="font-size:12px">${new Date(u.creado_en).toLocaleDateString('es-MX')}</td>
-      <td>${u.rol === 'admin_sistema'
-        ? '<span style="font-size:11px;color:var(--muted)">—</span>'
-        : `<button class="btn btn-ghost btn-sm" onclick="abrirEditarUsuario('${u.id}')">Editar</button>`}</td>
-    </tr>`).join('') || `<tr><td colspan="7"><div class="empty">Sin usuarios</div></td></tr>`;
+      <td><button class="btn btn-ghost btn-sm" onclick="abrirEditarUsuario('${u.id}')">Editar</button></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7"><div class="empty">Sin usuarios</div></td></tr>`;
 }
 
 let _invitaciones = [];
@@ -859,6 +863,13 @@ function abrirEditarUsuario(id) {
   document.getElementById('eu-pass').value   = '';
   document.getElementById('eu-error').textContent = '';
   document.getElementById('eu-email').dataset.original = u.email || '';
+
+  // Candado de auto-edición: no puedes cambiar tu propio rol/estado ni eliminarte
+  const esYoMismo = currentUser && u.id === currentUser.id;
+  document.getElementById('eu-rol').disabled    = esYoMismo;
+  document.getElementById('eu-activo').disabled = esYoMismo;
+  document.getElementById('eu-del-btn').style.display = esYoMismo ? 'none' : '';
+
   openModal('modal-editar-usuario');
 }
 

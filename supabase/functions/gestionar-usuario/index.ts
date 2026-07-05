@@ -21,8 +21,8 @@ const CORS = {
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 
-// Roles que la UI puede asignar (nunca admin_sistema desde aquí)
-const ROLES_PERMITIDOS = ["admin_clinica", "odontologo", "asistente", "recepcion"];
+// Roles asignables. admin_sistema solo lo puede otorgar otro admin_sistema (se valida abajo).
+const ROLES_PERMITIDOS = ["admin_clinica", "odontologo", "asistente", "recepcion", "admin_sistema"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -58,17 +58,18 @@ Deno.serve(async (req) => {
       .from("perfiles").select("id, rol, clinica_id, email").eq("id", userId).single();
     if (!target) return json({ error: "Usuario objetivo no encontrado" }, 404);
 
-    // Nadie edita a un admin_sistema desde aquí (protección)
-    if (target.rol === "admin_sistema") {
-      return json({ error: "No se puede modificar a un administrador de sistema" }, 403);
+    // A un Super Admin solo lo puede modificar otro Super Admin
+    if (target.rol === "admin_sistema" && !esAdminSistema) {
+      return json({ error: "Solo un Super Admin puede modificar a otro Super Admin" }, 403);
     }
     // Un admin_clinica solo puede tocar usuarios de SU propia clínica
     if (esAdminClinica && target.clinica_id !== callerPerfil.clinica_id) {
       return json({ error: "Solo puedes gestionar usuarios de tu propia clínica" }, 403);
     }
-    // Nadie se elimina/edita a sí mismo por esta vía (evita quedar fuera)
-    if (userId === caller.id && (action === "delete" || action === "update_rol")) {
-      return json({ error: "No puedes eliminar ni cambiar tu propio rol aquí" }, 400);
+    // Candados de auto-protección (no dejarte fuera a ti misma)
+    const esSelf = userId === caller.id;
+    if (esSelf && action === "delete") {
+      return json({ error: "No puedes eliminar tu propia cuenta" }, 400);
     }
 
     // 5) Acciones
@@ -76,14 +77,28 @@ Deno.serve(async (req) => {
       const f = fields || {};
       const patch: Record<string, unknown> = {};
       if (typeof f.nombre === "string")            patch.nombre = f.nombre.trim();
-      if (typeof f.activo === "boolean")           patch.activo = f.activo;
       if (f.medico_id !== undefined)               patch.medico_id = f.medico_id;
       if (Array.isArray(f.consultorios_ids))       patch.consultorios_ids = f.consultorios_ids;
       if (f.permisos !== undefined)                patch.permisos = f.permisos;
+
+      // Estado (no puedes desactivarte a ti misma)
+      if (typeof f.activo === "boolean") {
+        if (esSelf && f.activo === false) return json({ error: "No puedes desactivar tu propia cuenta" }, 400);
+        patch.activo = f.activo;
+      }
+
+      // Rol
       if (typeof f.rol === "string") {
         if (!ROLES_PERMITIDOS.includes(f.rol)) return json({ error: "Rol no válido" }, 400);
+        if (esSelf && f.rol !== callerPerfil.rol) return json({ error: "No puedes cambiar tu propio rol" }, 400);
+        if (f.rol === "admin_sistema" && !esAdminSistema) {
+          return json({ error: "Solo un Super Admin puede otorgar ese rol" }, 400);
+        }
         patch.rol = f.rol;
+        // Un Super Admin no pertenece a ninguna clínica
+        if (f.rol === "admin_sistema") patch.clinica_id = null;
       }
+
       if (!Object.keys(patch).length) return json({ error: "Nada que actualizar" }, 400);
       const { error } = await admin.from("perfiles").update(patch).eq("id", userId);
       if (error) return json({ error: error.message }, 400);
