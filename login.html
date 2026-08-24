@@ -211,8 +211,8 @@ document.getElementById('sd-btn-login').addEventListener('click', function() {
       if (perfil && perfil.rol !== 'admin_sistema' && perfil.clinicas && perfil.clinicas.activa === false) {
         return bloquear('El acceso de tu clínica está suspendido. Contacta a SudentAr para regularizar tu cuenta.');
       }
-      btn.textContent = '✓ Acceso concedido';
-      window.location.href = '/index.html';
+  btn.textContent = '✓ Acceso concedido';
+      window.location.href = (perfil && perfil.rol === 'admin_sistema') ? '/admin.html' : '/index.html';
     });
   });
 });
