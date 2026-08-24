@@ -271,7 +271,7 @@ textarea{resize:vertical;min-height:72px;}
 <div id="view-pacientes" class="view">
   <div class="page-header">
     <div><div class="page-title">Pacientes</div><div class="page-sub" id="count-pacs">—</div></div>
-    <button class="btn btn-primary" onclick="openModal('modal-nuevo-paciente')">+ Nuevo paciente</button>
+    <button class="btn btn-primary" onclick="abrirNuevoPaciente()">+ Nuevo paciente</button>
   </div>
   <div class="filter-bar">
     <input type="text" placeholder="Buscar nombre, teléfono..." id="buscar-pac" oninput="renderPacientes()">
@@ -415,6 +415,17 @@ textarea{resize:vertical;min-height:72px;}
 <!-- ═══════════ MODALS ═══════════ -->
 
 <!-- NUEVO PACIENTE / EDITAR -->
+<div class="modal-overlay" id="modal-confirm-generico">
+<div class="modal modal-sm">
+  <div class="modal-header"><span class="modal-title" id="confirm-generico-title">Confirmar</span><button class="modal-close" onclick="_resolverConfirmGenerico(false)">✕</button></div>
+  <div class="modal-body"><p id="confirm-generico-msg" style="margin:0;line-height:1.5;color:var(--text)"></p></div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" id="confirm-generico-no" onclick="_resolverConfirmGenerico(false)">No</button>
+    <button class="btn btn-primary" id="confirm-generico-si" onclick="_resolverConfirmGenerico(true)">Sí</button>
+  </div>
+</div>
+</div>
+
 <div class="modal-overlay" id="modal-nuevo-paciente">
 <div class="modal">
   <div class="modal-header"><span class="modal-title" id="pac-modal-title">Nuevo Paciente</span><button class="modal-close" onclick="closeModal('modal-nuevo-paciente')">✕</button></div>
@@ -970,6 +981,9 @@ function renderAll() {
   renderPacientes();
   renderCitas();
   cargarCitasDia();
+  // Filtro de Ingresos: por defecto al día en curso (solo la primera vez que carga la vista)
+  const ingDesdeEl=document.getElementById('ing-desde'), ingHastaEl=document.getElementById('ing-hasta');
+  if(ingDesdeEl && !ingDesdeEl.value && !ingDesdeEl.dataset.tocado){const hoy=new Date().toISOString().substring(0,10);ingDesdeEl.value=hoy;ingHastaEl.value=hoy;}
   renderMovimientos();
   renderConsultorios();
   renderMedicos();
@@ -1008,6 +1022,21 @@ function showToast(msg,ok=true) {
 }
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// Diálogo de confirmación con el mismo estilo visual de la plataforma
+// (en vez del confirm() nativo del navegador). Uso: await confirmDialog('mensaje', {titulo:'...', si:'Sí', no:'No'})
+let _resolverConfirmGenerico=null;
+function confirmDialog(msg,opts){
+  opts=opts||{};
+  document.getElementById('confirm-generico-title').textContent=opts.titulo||'Confirmar';
+  document.getElementById('confirm-generico-msg').textContent=msg;
+  document.getElementById('confirm-generico-si').textContent=opts.si||'Sí';
+  document.getElementById('confirm-generico-no').textContent=opts.no||'No';
+  openModal('modal-confirm-generico');
+  return new Promise(resolve=>{
+    _resolverConfirmGenerico=function(val){closeModal('modal-confirm-generico');resolve(val);};
+  });
+}
 document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
 function switchView(name,el){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -1274,7 +1303,8 @@ async function guardarPaciente(){
     }
     closeModal('modal-nuevo-paciente');renderPacientes();renderKPIs();
     showToast('Paciente registrado');
-    if(confirm('Paciente registrado. ¿Quieres registrar historia clínica o abonos para este paciente ahora?')){
+    const registrarMas=await confirmDialog('Paciente registrado. ¿Quieres registrar historia clínica o abonos para este paciente ahora?',{titulo:'Paciente registrado'});
+    if(registrarMas){
       verPaciente(data.id);
     }
   }
