@@ -321,6 +321,11 @@ textarea{resize:vertical;min-height:72px;}
     <input type="date" id="ing-desde" onchange="renderMovimientos()"><input type="date" id="ing-hasta" onchange="renderMovimientos()">
     <select id="filtro-cons-ing" onchange="renderMovimientos()"><option value="">Todos los consultorios</option></select>
   </div>
+  <div class="stats-grid-3" id="stats-filtro-ing" style="display:none">
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)" id="ing-filtro">—</div><div class="stat-lbl" id="ing-filtro-lbl">Ingresos del filtro</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--red)" id="egr-filtro">—</div><div class="stat-lbl">Egresos del filtro</div></div>
+    <div class="stat-card"><div class="stat-val" id="bal-filtro">—</div><div class="stat-lbl">Balance del filtro</div></div>
+  </div>
   <div class="card"><div class="card-header"><span class="card-title">Movimientos</span></div>
     <div id="lista-movs"><div class="empty">Cargando...</div></div>
   </div>
@@ -1209,7 +1214,7 @@ function abrirNuevoPaciente(){
   document.getElementById('btn-save-pac').textContent='Registrar Paciente';
   document.getElementById('btn-save-pac').onclick=guardarPaciente;
   document.getElementById('np-edit-id').value='';
-  ['np-nombre','np-telefono','np-email','np-curp','np-dir','np-emg','np-emg-tel','np-alergias','np-enf','np-meds','np-ant','np-motivo','np-diag','np-trat','np-costo','np-prox','np-hora'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['np-nombre','np-nacimiento','np-telefono','np-email','np-curp','np-dir','np-emg','np-emg-tel','np-alergias','np-enf','np-meds','np-ant','np-motivo','np-diag','np-trat','np-costo','np-prox','np-hora'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('np-gsang').value='';
   document.getElementById('np-tipo').value='eventual';
   document.getElementById('np-medico').value='';
@@ -1248,11 +1253,15 @@ async function guardarPaciente(){
     creado_por:USER_ID,
   };
   if(editId){
+    const prevProx=_pacs.find(p=>p.id==editId)?.proxima_cita||null;
     const {error}=await sb.from('pacientes').update(payload).eq('id',editId);
     btn.disabled=false;btn.textContent='Guardar cambios';
     if(error){showToast('Error: '+error.message,false);return;}
     const idx=_pacs.findIndex(p=>p.id==editId);
     if(idx>=0)_pacs[idx]={..._pacs[idx],...payload};
+    if(payload.proxima_cita && payload.proxima_cita!==prevProx){
+      await crearCitaDesdeProximaCita(editId,payload);
+    }
     closeModal('modal-nuevo-paciente');renderPacientes();showToast('Paciente actualizado');
     verPaciente(editId);
   } else {
@@ -1260,9 +1269,34 @@ async function guardarPaciente(){
     btn.disabled=false;btn.textContent='Registrar Paciente';
     if(error){showToast('Error: '+error.message,false);return;}
     _pacs.push(data);
+    if(payload.proxima_cita){
+      await crearCitaDesdeProximaCita(data.id,payload);
+    }
     closeModal('modal-nuevo-paciente');renderPacientes();renderKPIs();
-    showToast('Paciente registrado');verPaciente(data.id);
+    showToast('Paciente registrado');
+    if(confirm('Paciente registrado. ¿Quieres registrar historia clínica o abonos para este paciente ahora?')){
+      verPaciente(data.id);
+    }
   }
+}
+
+// Crea una cita en la agenda a partir del campo "Próxima cita" del paciente,
+// para que quede reflejada en Citas y no solo guardada en la ficha del paciente.
+async function crearCitaDesdeProximaCita(pacienteId,payload){
+  const {data,error}=await sb.from('citas').insert({
+    clinica_id:CLINICA_ID,paciente_id:pacienteId,
+    medico_id:payload.medico_id||null,
+    fecha:payload.proxima_cita,
+    hora:payload.hora_cita||'09:00',
+    tipo:'consulta',
+    estado:'pendiente',
+    notas:payload.motivo||null,
+    creado_por:USER_ID,creado_por_nombre:USER_NOMBRE,
+  }).select().single();
+  if(error){showToast('Paciente guardado, pero no se pudo agendar la cita: '+error.message,false);return;}
+  _citas.push(data);
+  if(typeof renderCitas==='function')renderCitas();
+  if(typeof cargarCitasDia==='function')cargarCitasDia();
 }
 
 // ══════════════════════════════════════════════
@@ -1792,7 +1826,7 @@ function renderMovimientos(){
     });
   }
   const mes=new Date().toISOString().substring(0,7);
-  const mm=movs.filter(m=>m.fecha?.startsWith(mes));
+  const mm=[..._pagos].filter(m=>m.fecha?.startsWith(mes));
   const ing=mm.filter(m=>m.tipo!=='egreso').reduce((s,m)=>s+Number(m.monto),0);
   const egr=mm.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+Number(m.monto),0);
   const bal=ing-egr;
@@ -1801,6 +1835,25 @@ function renderMovimientos(){
   const balEl=document.getElementById('bal-mes');
   balEl.textContent=fmtMoney(bal);
   balEl.style.color=bal>=0?'var(--green)':'var(--red)';
+
+  // Totales del rango filtrado (desde/hasta/consultorio/búsqueda) — independiente
+  // del mes en curso, para que "24 ago" sume solo ese día, "24-25 ago" sume ambos, etc.
+  const statsFiltro=document.getElementById('stats-filtro-ing');
+  if(desde||hasta||cons||q){
+    const ingF=movs.filter(m=>m.tipo!=='egreso').reduce((s,m)=>s+Number(m.monto),0);
+    const egrF=movs.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+Number(m.monto),0);
+    const balF=ingF-egrF;
+    document.getElementById('ing-filtro').textContent=fmtMoney(ingF);
+    document.getElementById('egr-filtro').textContent=fmtMoney(egrF);
+    const balFEl=document.getElementById('bal-filtro');
+    balFEl.textContent=fmtMoney(balF);
+    balFEl.style.color=balF>=0?'var(--green)':'var(--red)';
+    const lbl=desde&&hasta?`Ingresos ${fmtDate(desde)} – ${fmtDate(hasta)}`:desde?`Ingresos desde ${fmtDate(desde)}`:hasta?`Ingresos hasta ${fmtDate(hasta)}`:'Ingresos del filtro';
+    document.getElementById('ing-filtro-lbl').textContent=lbl;
+    statsFiltro.style.display='';
+  } else {
+    statsFiltro.style.display='none';
+  }
   const el=document.getElementById('lista-movs');
   if(!movs.length){el.innerHTML=`<div class="empty">${q?'Sin resultados para tu búsqueda':'Sin movimientos registrados'}</div>`;return;}
   el.innerHTML=movs.map(m=>{
