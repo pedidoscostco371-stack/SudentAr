@@ -829,7 +829,17 @@ async function init() {
   if (!session) { window.location.replace('/login'); return; }
   USER_ID = session.user.id;
   const { data: perfil } = await sb.from('perfiles').select('*,clinicas(*)').eq('id', USER_ID).single();
-  if (!perfil) { window.location.replace('/login'); return; }
+   if (!perfil) {
+    // Cuenta de acceso sin perfil (huérfana): cerramos sesión para no quedar
+    // en loop infinito entre login e index.html.
+    await sb.auth.signOut();
+    window.location.replace('/login?blocked=noperfil');
+    return;
+  }
+
+  // Super Admin no pertenece a ninguna clínica: este panel es por-clínica,
+  // así que lo mandamos a su propio panel para evitar operar con clinica_id nulo.
+  if (perfil.rol === 'admin_sistema') { window.location.replace('/admin.html'); return; }
   _clinicaData = perfil.clinicas;
 
   // ── Bloqueo de acceso ──
