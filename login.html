@@ -157,7 +157,9 @@ var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // Si ya hay sesión, ir directo al sistema
 sb.auth.getSession().then(function(r) {
   if (r.data && r.data.session) {
-    window.location.href = '/index.html';
+    sb.from('perfiles').select('rol').eq('id', r.data.session.user.id).single().then(function(pr) {
+      window.location.href = (pr.data && pr.data.rol === 'admin_sistema') ? '/admin.html' : '/index.html';
+    });
   }
 });
 
