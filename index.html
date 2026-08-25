@@ -78,7 +78,7 @@ textarea{resize:vertical;min-height:72px;}
 .form-grid .full{grid-column:1/-1;}
 .section-sep{grid-column:1/-1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:2px;}
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,48,.5);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,48,.5);z-index:250;align-items:center;justify-content:center;padding:16px;}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--surface);border-radius:16px;width:100%;max-width:660px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.22);}
 .modal-sm{max-width:440px;}
@@ -1584,17 +1584,7 @@ async function verPaciente(id){
   `;
 
   // ARCHIVOS
-  document.getElementById('tp-arc').innerHTML=`
-    <div style="margin-bottom:14px">
-      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:var(--purple);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Subir archivo
-        <input type="file" multiple style="display:none" onchange="subirArchivo('${p.id}',this)">
-      </label>
-      <span style="font-size:11px;color:var(--muted);margin-left:10px">PDF, imágenes, radiografías</span>
-    </div>
-    <div class="empty" style="padding:20px">Integración con almacenamiento disponible próximamente</div>
-  `;
+  renderArchivosTab(p.id);
   openModal('modal-detalle');
 }
 
@@ -2500,8 +2490,82 @@ async function invitarUsuario(){
 }
 
 
-function subirArchivo(pacId,input){
-  showToast('Función de archivos disponible próximamente');
+const ARC_BUCKET='documentos-pacientes';
+
+function arcTabHTML(){
+  return `
+    <div style="margin-bottom:14px">
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:var(--purple);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Subir archivo
+        <input type="file" multiple style="display:none" onchange="subirArchivo('${_currentPacId}',this)">
+      </label>
+      <span style="font-size:11px;color:var(--muted);margin-left:10px">PDF, imágenes, radiografías · máx 20MB c/u</span>
+    </div>
+    <div id="arc-lista"><div class="empty" style="padding:20px">Cargando archivos...</div></div>
+  `;
+}
+
+async function renderArchivosTab(pacId){
+  document.getElementById('tp-arc').innerHTML=arcTabHTML();
+  await cargarYPintarArchivos(pacId);
+}
+
+async function cargarYPintarArchivos(pacId){
+  const cont=document.getElementById('arc-lista');
+  if(!cont)return;
+  const{data,error}=await sb.from('documentos_pacientes').select('*').eq('paciente_id',pacId).order('creado_en',{ascending:false});
+  if(error){cont.innerHTML='<div class="empty" style="padding:20px">Error al cargar archivos</div>';console.error(error);return;}
+  if(!data||!data.length){cont.innerHTML='<div class="empty" style="padding:20px">Sin archivos subidos</div>';return;}
+  cont.innerHTML=data.map(f=>`
+    <div class="mov-item">
+      <div>
+        <div class="mov-desc">${f.nombre_archivo}</div>
+        <div class="mov-meta">${fmtDate(f.creado_en?.substring(0,10)||'')} · ${((f.tamano_bytes||0)/1024).toFixed(0)} KB · ${f.subido_por_nombre||'—'}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="descargarArchivo('${f.ruta_storage}','${f.nombre_archivo.replace(/'/g,"\\'")}')">Ver</button>
+        <button class="btn btn-sm" style="color:var(--red,#d33)" onclick="eliminarArchivo(${f.id},'${f.ruta_storage}',${pacId})">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function subirArchivo(pacId,input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  for(const file of files){
+    if(file.size>20*1024*1024){showToast(`"${file.name}" supera 20MB`);continue;}
+    const ruta=`${CLINICA_ID}/${pacId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    showToast(`Subiendo ${file.name}...`);
+    const{error:upErr}=await sb.storage.from(ARC_BUCKET).upload(ruta,file,{upsert:false});
+    if(upErr){showToast(`Error al subir ${file.name}`);console.error(upErr);continue;}
+    const{error:dbErr}=await sb.from('documentos_pacientes').insert({
+      clinica_id:CLINICA_ID,paciente_id:pacId,nombre_archivo:file.name,
+      ruta_storage:ruta,tipo_mime:file.type,tamano_bytes:file.size,
+      subido_por:USER_ID,subido_por_nombre:USER_NOMBRE
+    });
+    if(dbErr){showToast(`Error al registrar ${file.name}`);console.error(dbErr);continue;}
+  }
+  input.value='';
+  showToast('Archivos subidos');
+  cargarYPintarArchivos(pacId);
+}
+
+async function descargarArchivo(ruta,nombre){
+  const{data,error}=await sb.storage.from(ARC_BUCKET).createSignedUrl(ruta,60);
+  if(error||!data?.signedUrl){showToast('No se pudo abrir el archivo');console.error(error);return;}
+  window.open(data.signedUrl,'_blank');
+}
+
+async function eliminarArchivo(docId,ruta,pacId){
+  if(!confirm('¿Eliminar este archivo? Esta acción no se puede deshacer.'))return;
+  const{error:storErr}=await sb.storage.from(ARC_BUCKET).remove([ruta]);
+  if(storErr){showToast('Error al eliminar archivo');console.error(storErr);return;}
+  const{error:dbErr}=await sb.from('documentos_pacientes').delete().eq('id',docId);
+  if(dbErr){showToast('Error al eliminar registro');console.error(dbErr);return;}
+  showToast('Archivo eliminado');
+  cargarYPintarArchivos(pacId);
 }
 
 // ══════════════════════════════════════════════
