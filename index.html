@@ -486,7 +486,7 @@ textarea{resize:vertical;min-height:72px;}
   <div class="modal-body">
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab(this,'tp-exp')">Expediente</button>
-      <button class="tab-btn" onclick="switchTab(this,'tp-hc')">Historia Clínica</button>
+      <button class="tab-btn" id="tab-btn-hc" onclick="switchTab(this,'tp-hc')">Historia Clínica</button>
       <button class="tab-btn" onclick="switchTab(this,'tp-fin')">Financiero</button>
       <button class="tab-btn" onclick="switchTab(this,'tp-cit')">Citas</button>
       <button class="tab-btn" onclick="switchTab(this,'tp-arc')">Archivos</button>
@@ -814,6 +814,38 @@ textarea{resize:vertical;min-height:72px;}
 </div>
 </div>
 
+<!-- ════ MODAL: Nueva Evaluación de Sesión (clínicas tipo "otras": fisio/masaje/facial) ════ -->
+<div class="modal-overlay" id="modal-eval-sesion">
+<div class="modal modal-md">
+  <div class="modal-header"><span class="modal-title" id="eval-sesion-title">Nueva Evaluación de Sesión</span><button class="modal-close" onclick="closeModal('modal-eval-sesion')">✕</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="eval-edit-id">
+    <input type="hidden" id="eval-pac-id">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Escala de dolor (EVA 0–10)</label>
+        <input type="number" id="eval-dolor" min="0" max="10" placeholder="0-10"></div>
+      <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="eval-fecha"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Zona / articulación tratada</label>
+      <input id="eval-zona" placeholder="Ej. Zona lumbar, hombro derecho">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Técnicas aplicadas</label>
+      <input id="eval-tecnicas" placeholder="Ej. Masoterapia, electroestimulación, estiramiento">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observaciones</label>
+      <textarea id="eval-obs" rows="3" placeholder="Evolución, respuesta del paciente, recomendaciones"></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-eval-sesion')">Cancelar</button>
+    <button class="btn btn-primary" id="btn-save-eval" onclick="guardarEvaluacionSesion()">Guardar Evaluación</button>
+  </div>
+</div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -893,6 +925,7 @@ async function init() {
   document.title = 'SudentAr — ' + clinicaNombre;
 
   aplicarVisibilidadModulos();
+  aplicarOpcionesTipoCita();
 
   await cargarTodo();
   setFechasHoy();
@@ -903,6 +936,22 @@ async function init() {
 // ══════════════════════════════════════════════
 // VISIBILIDAD DE MÓDULOS SEGÚN ROL Y PERMISOS INDIVIDUALES
 // ══════════════════════════════════════════════
+// Catálogo de tipos de cita según el giro de la clínica.
+const TIPOS_CITA_DENTAL=[
+  ['consulta','Consulta'],['limpieza','Limpieza'],['tratamiento','Tratamiento'],
+  ['ortodoncia','Ortodoncia'],['extraccion','Extracción'],['endodoncia','Endodoncia'],
+  ['cirugia','Cirugía'],['otro','Otro'],
+];
+const TIPOS_CITA_OTRAS=[
+  ['terapia_fisica','Terapia física'],['masaje','Masaje'],
+  ['limpieza_facial','Limpieza facial'],['otro','Otro'],
+];
+function aplicarOpcionesTipoCita(){
+  const sel=document.getElementById('cita-tipo');if(!sel)return;
+  const tipos = _clinicaData?.tipo_clinica === 'otras' ? TIPOS_CITA_OTRAS : TIPOS_CITA_DENTAL;
+  sel.innerHTML = tipos.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+}
+
 function aplicarVisibilidadModulos(){
   // admin_sistema y admin_clinica: ven todo, sin restricciones
   if (['admin_sistema','admin_clinica'].includes(USER_ROL)) {
@@ -1528,6 +1577,106 @@ async function cargarHistoriaClinica(pacId){
   _hc=data||[];
 }
 
+// ══════════════════════════════════════════════
+// EVALUACIONES DE SESIÓN (clínicas tipo "otras": fisioterapia, masajes, faciales)
+// Reemplaza al odontograma para este tipo de clínica.
+// ══════════════════════════════════════════════
+let _evalSesion=[];
+
+async function cargarEvaluacionesSesion(pacId){
+  const{data,error}=await sb.from('evaluaciones_sesion').select('*').eq('paciente_id',pacId).order('fecha',{ascending:false});
+  if(error){_evalSesion=[];console.error(error);return;}
+  _evalSesion=data||[];
+}
+
+function renderEvaluacionesTab(){
+  const el=document.getElementById('tp-hc');if(!el)return;
+  const itemHTML=(n)=>`
+    <div class="hc-item">
+      <div class="hc-item-head">
+        <div>
+          <div class="hc-item-piezas">${n.zona_tratada||'Zona no especificada'}${n.dolor_eva!=null?` · Dolor EVA: ${n.dolor_eva}/10`:''}</div>
+          <div class="hc-item-desc">${n.tecnicas_aplicadas?`<strong>Técnicas:</strong> ${n.tecnicas_aplicadas}<br>`:''}${n.observaciones||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="hc-item-fecha">${fmtDate(n.fecha)}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="btn btn-ghost btn-sm" onclick="editarEvaluacionSesion(${n.id})">Editar</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="eliminarEvaluacionSesion(${n.id})">Eliminar</button>
+      </div>
+    </div>`;
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <strong>Evaluaciones y notas de sesión</strong>
+      <button class="btn btn-primary btn-sm" onclick="abrirNuevaEvaluacionSesion()">+ Nueva evaluación</button>
+    </div>
+    ${_evalSesion.length?_evalSesion.map(itemHTML).join(''):'<div class="empty" style="padding:16px">Sin evaluaciones registradas aún</div>'}
+  `;
+}
+
+function abrirNuevaEvaluacionSesion(){
+  document.getElementById('eval-edit-id').value='';
+  document.getElementById('eval-pac-id').value=_currentPacId;
+  document.getElementById('eval-dolor').value='';
+  document.getElementById('eval-zona').value='';
+  document.getElementById('eval-tecnicas').value='';
+  document.getElementById('eval-obs').value='';
+  document.getElementById('eval-fecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('eval-sesion-title').textContent='Nueva Evaluación de Sesión';
+  openModal('modal-eval-sesion');
+}
+
+function editarEvaluacionSesion(id){
+  const n=_evalSesion.find(x=>x.id==id);if(!n)return;
+  document.getElementById('eval-edit-id').value=n.id;
+  document.getElementById('eval-pac-id').value=n.paciente_id;
+  document.getElementById('eval-dolor').value=n.dolor_eva??'';
+  document.getElementById('eval-zona').value=n.zona_tratada||'';
+  document.getElementById('eval-tecnicas').value=n.tecnicas_aplicadas||'';
+  document.getElementById('eval-obs').value=n.observaciones||'';
+  document.getElementById('eval-fecha').value=n.fecha;
+  document.getElementById('eval-sesion-title').textContent='Editar Evaluación de Sesión';
+  openModal('modal-eval-sesion');
+}
+
+async function guardarEvaluacionSesion(){
+  const editId=document.getElementById('eval-edit-id').value;
+  const pacId=document.getElementById('eval-pac-id').value;
+  const dolorRaw=document.getElementById('eval-dolor').value;
+  const payload={
+    clinica_id:CLINICA_ID,
+    paciente_id:pacId,
+    dolor_eva:dolorRaw===''?null:Number(dolorRaw),
+    zona_tratada:document.getElementById('eval-zona').value.trim(),
+    tecnicas_aplicadas:document.getElementById('eval-tecnicas').value.trim(),
+    observaciones:document.getElementById('eval-obs').value.trim(),
+    fecha:document.getElementById('eval-fecha').value,
+    creado_por:USER_ID,
+    creado_por_nombre:USER_NOMBRE,
+  };
+  let error;
+  if(editId){
+    ({error}=await sb.from('evaluaciones_sesion').update(payload).eq('id',editId));
+  } else {
+    ({error}=await sb.from('evaluaciones_sesion').insert(payload));
+  }
+  if(error){showToast('Error: '+error.message,false);return;}
+  closeModal('modal-eval-sesion');
+  showToast(editId?'✅ Evaluación actualizada':'✅ Evaluación registrada');
+  await cargarEvaluacionesSesion(pacId);
+  renderEvaluacionesTab();
+}
+
+async function eliminarEvaluacionSesion(id){
+  if(!confirm('¿Eliminar esta evaluación de sesión?'))return;
+  const{error}=await sb.from('evaluaciones_sesion').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return;}
+  _evalSesion=_evalSesion.filter(x=>x.id!=id);
+  renderEvaluacionesTab();showToast('Evaluación eliminada');
+}
+
 async function verPaciente(id){
   _currentPacId=id;
   _odoSel=[];
@@ -1537,9 +1686,15 @@ async function verPaciente(id){
   const pagado=pagos.reduce((s,pg)=>s+Number(pg.monto),0);
   const saldo=saldoPac(p);const med=getMed(p.medico_id);
 
-  // HISTORIA CLÍNICA (cargar antes de pintar, con loader breve)
-  document.getElementById('tp-hc').innerHTML='<div class="empty">Cargando historia clínica...</div>';
-  cargarHistoriaClinica(id).then(renderHistoriaClinicaTab);
+  // HISTORIA CLÍNICA / EVALUACIONES DE SESIÓN (según tipo de clínica)
+  document.getElementById('tp-hc').innerHTML='<div class="empty">Cargando expediente...</div>';
+  if (_clinicaData?.tipo_clinica === 'otras') {
+    document.getElementById('tab-btn-hc').textContent='Evaluaciones';
+    cargarEvaluacionesSesion(id).then(renderEvaluacionesTab);
+  } else {
+    document.getElementById('tab-btn-hc').textContent='Historia Clínica';
+    cargarHistoriaClinica(id).then(renderHistoriaClinicaTab);
+  }
 
   // EXPEDIENTE
   document.getElementById('tp-exp').innerHTML=`

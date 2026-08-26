@@ -307,6 +307,14 @@
     <div class="form-group"><label>Dirección</label>
       <input id="cl-dir" placeholder="Calle, Número, Colonia, Ciudad"></div>
     <div class="form-row">
+      <div class="form-group"><label>Tipo de clínica *</label>
+        <select id="cl-tipo">
+          <option value="dental">Dental</option>
+          <option value="otras">Otras (fisioterapia, masajes, spa, etc.)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label>Plan *</label>
         <select id="cl-plan" onchange="updatePlanLimits()">
           <option value="basico">Básico — $399 + IVA</option>
@@ -618,6 +626,7 @@ function abrirNuevaClinica() {
   document.getElementById('cl-email').value = '';
   document.getElementById('cl-tel').value = '';
   document.getElementById('cl-dir').value = '';
+  document.getElementById('cl-tipo').value = 'dental';
   document.getElementById('cl-plan').value = 'basico';
   document.getElementById('cl-color').value = '#3BBFBF';
   updatePlanLimits();
@@ -637,6 +646,7 @@ function abrirEditarClinica(id) {
   document.getElementById('cl-email').value = c.email || '';
   document.getElementById('cl-tel').value = c.telefono || '';
   document.getElementById('cl-dir').value = c.direccion || '';
+  document.getElementById('cl-tipo').value = c.tipo_clinica || 'dental';
   document.getElementById('cl-plan').value = c.plan || 'basico';
   document.getElementById('cl-color').value = c.color || '#3BBFBF';
   updatePlanLimits();
@@ -657,6 +667,7 @@ async function guardarClinica() {
     email:        document.getElementById('cl-email').value.trim(),
     telefono:     document.getElementById('cl-tel').value.trim(),
     direccion:    document.getElementById('cl-dir').value.trim(),
+    tipo_clinica: document.getElementById('cl-tipo').value,
     color:        document.getElementById('cl-color').value,
     plan,
     max_usuarios:  cfg.max_usuarios,
