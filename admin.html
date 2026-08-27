@@ -242,9 +242,12 @@
 
     <!-- USUARIOS -->
     <div id="tab-usuarios" class="view">
-      <div class="page-header">
-        <div class="page-title">👤 Usuarios</div>
-        <div class="page-sub">Odontólogos y personal registrado</div>
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div>
+          <div class="page-title">👤 Usuarios</div>
+          <div class="page-sub">Equipo interno de SudentAr (Admin Sistema)</div>
+        </div>
+        <button class="btn btn-primary" onclick="abrirNuevoUsuarioAdmin()">＋ Nuevo usuario</button>
       </div>
       <div class="card">
         <table>
@@ -408,6 +411,28 @@
   </div>
 </div>
 
+<!-- ════ MODAL: Nuevo Usuario Admin Sistema ════ -->
+<div class="modal-backdrop" id="modal-nuevo-usuario-admin">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">＋ Nuevo usuario (equipo interno)</span>
+      <button class="modal-close" onclick="closeModal('modal-nuevo-usuario-admin')">✕</button>
+    </div>
+    <div class="form-group"><label>Nombre completo *</label>
+      <input id="nu-nombre" placeholder="Nombre y apellido"></div>
+    <div class="form-group"><label>Correo electrónico *</label>
+      <input id="nu-email" type="email" placeholder="correo@sudentar.com"></div>
+    <div style="background:#EAF5EE;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green);margin-bottom:16px">
+      📧 Se creará la cuenta con rol Admin Sistema y se le mandará un correo para que ponga su contraseña.
+    </div>
+    <div id="nu-error" style="color:var(--red);font-size:12px;min-height:16px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nuevo-usuario-admin')">Cancelar</button>
+      <button class="btn btn-primary" id="nu-save-btn" onclick="guardarNuevoUsuarioAdmin()">Crear y enviar acceso</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -516,10 +541,20 @@ async function loadDashboard() {
 }
 
 let _clinicas = [];
+let _adminsClinica = [];
 async function loadClinicas() {
-  const { data } = await sb.from('clinicas').select('*').order('creado_en', { ascending: false });
-  _clinicas = data || [];
-  document.getElementById('clinicas-tbl').innerHTML = _clinicas.map(c => `
+  const [{ data: clinicasData }, { data: adminsData }] = await Promise.all([
+    sb.from('clinicas').select('*').order('creado_en', { ascending: false }),
+    sb.from('perfiles').select('id, clinica_id, nombre, email, activo').eq('rol', 'admin_clinica'),
+  ]);
+  _clinicas = clinicasData || [];
+  _adminsClinica = adminsData || [];
+  document.getElementById('clinicas-tbl').innerHTML = _clinicas.map(c => {
+    const admin = _adminsClinica.find(a => a.clinica_id === c.id);
+    const accesoBtn = admin
+      ? `<button class="btn btn-ghost btn-sm" onclick="enviarAccesoClinica('${c.id}', true)">🔑 Reenviar acceso</button>`
+      : `<button class="btn btn-primary btn-sm" onclick="enviarAccesoClinica('${c.id}', false)">✉ Invitar admin</button>`;
+    return `
     <tr>
       <td><strong>${c.nombre}</strong><br><small style="color:var(--muted)">${c.email || ''}</small></td>
       <td style="font-size:12px">${c.rfc || '—'}</td>
@@ -529,6 +564,7 @@ async function loadClinicas() {
       <td><span class="badge badge-${c.activa ? 'green' : 'red'}">${c.activa ? 'Activa' : 'Inactiva'}</span></td>
       <td style="white-space:nowrap">
         <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${accesoBtn}
           <button class="btn btn-ghost btn-sm" onclick="abrirEditarClinica('${c.id}')">✏ Editar</button>
           <button class="btn btn-ghost btn-sm" onclick="toggleClinica('${c.id}', ${c.activa})">
             ${c.activa ? '⏸ Suspender' : '▶ Activar'}
@@ -536,12 +572,42 @@ async function loadClinicas() {
           <button class="btn btn-danger btn-sm" onclick="eliminarClinica('${c.id}')">🗑 Eliminar</button>
         </div>
       </td>
-    </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏥</div>Sin clínicas registradas</div></td></tr>`;
+    </tr>`;
+  }).join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏥</div>Sin clínicas registradas</div></td></tr>`;
+}
+
+async function enviarAccesoClinica(clinicaId, esReenvio) {
+  const c = _clinicas.find(x => x.id === clinicaId);
+  if (!c) return;
+  if (!c.email) return showToast('Esta clínica no tiene email de contacto registrado');
+  if (!c.responsable) return showToast('Agrega primero el nombre del responsable en "Editar"');
+
+  const { data: { session } } = await sb.auth.getSession();
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/crear-usuario-admin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+      'apikey': SUPABASE_ANON,
+    },
+    body: JSON.stringify({
+      nombre: c.responsable,
+      email: c.email,
+      rol: 'admin_clinica',
+      clinica_id: clinicaId,
+    }),
+  });
+  const result = await resp.json();
+  if (!resp.ok) { showToast('Error: ' + (result.error || 'desconocido')); return; }
+  showToast(result.emailEnviado
+    ? (esReenvio ? '✉ Acceso reenviado a ' + c.email : '✅ Cuenta creada · Correo enviado a ' + c.email)
+    : 'Se creó/actualizó la cuenta, pero el correo no pudo enviarse (' + (result.emailError || '') + ')');
+  loadClinicas();
 }
 
 let _usuariosAdmin = [];
 async function loadUsuarios() {
-  const { data } = await sb.from('perfiles').select('*, clinicas(nombre)').order('creado_en', { ascending: false });
+  const { data } = await sb.from('perfiles').select('*, clinicas(nombre)').eq('rol', 'admin_sistema').order('creado_en', { ascending: false });
   _usuariosAdmin = data || [];
   document.getElementById('usuarios-tbl').innerHTML = _usuariosAdmin.map(u => {
     const esSuper = u.rol === 'admin_sistema';
@@ -926,6 +992,42 @@ async function eliminarUsuarioAdmin() {
   if (!r.ok) { errEl.textContent = r.error; return; }
   closeModal('modal-editar-usuario');
   showToast('🗑 Usuario eliminado');
+  loadUsuarios();
+}
+
+function abrirNuevoUsuarioAdmin() {
+  document.getElementById('nu-nombre').value = '';
+  document.getElementById('nu-email').value = '';
+  document.getElementById('nu-error').textContent = '';
+  openModal('modal-nuevo-usuario-admin');
+}
+
+async function guardarNuevoUsuarioAdmin() {
+  const nombre = document.getElementById('nu-nombre').value.trim();
+  const email  = document.getElementById('nu-email').value.trim();
+  const errEl  = document.getElementById('nu-error');
+  const btn    = document.getElementById('nu-save-btn');
+  errEl.textContent = '';
+  if (!nombre || !email) { errEl.textContent = 'Nombre y correo son obligatorios'; return; }
+
+  btn.disabled = true; btn.textContent = 'Creando...';
+  const { data: { session } } = await sb.auth.getSession();
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/crear-usuario-admin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+      'apikey': SUPABASE_ANON,
+    },
+    body: JSON.stringify({ nombre, email, rol: 'admin_sistema' }),
+  });
+  const result = await resp.json();
+  btn.disabled = false; btn.textContent = 'Crear y enviar acceso';
+
+  if (!resp.ok) { errEl.textContent = result.error || 'Error desconocido'; return; }
+
+  closeModal('modal-nuevo-usuario-admin');
+  showToast(result.emailEnviado ? '✅ Usuario creado · Correo enviado' : 'Se creó el usuario, pero el correo no pudo enviarse');
   loadUsuarios();
 }
 
