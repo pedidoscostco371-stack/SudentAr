@@ -774,7 +774,7 @@ textarea{resize:vertical;min-height:72px;}
     </div>
 
     <div style="font-size:12px;color:var(--muted);background:var(--s2);padding:10px 12px;border-radius:8px;margin-top:14px">
-      Se creará la cuenta con una contraseña temporal. El usuario deberá usar "¿Olvidaste tu contraseña?" en el login para establecer la suya.
+      📧 Se creará la cuenta y le enviaremos un correo con un enlace seguro para que active su cuenta y cree su propia contraseña.
     </div>
   </div>
   <div class="modal-footer">
@@ -2644,10 +2644,12 @@ async function invitarUsuario(){
 
   btn.disabled=false;btn.textContent='Invitar';
 
-  if(resultado.cuentaYaExistia){
-    showToast(`El correo ${email} ya tenía una cuenta registrada — se actualizó su perfil con estos permisos. Si no sabe su contraseña, debe usar "¿Olvidaste tu contraseña?" en el login.`);
+  if(resultado.emailEnviado){
+    showToast(resultado.cuentaYaExistia
+      ? `✅ ${nombre} ya tenía cuenta — se actualizaron sus permisos y le reenviamos el correo de acceso a ${email}.`
+      : `✅ Se invitó a ${nombre}. Le enviamos un correo a ${email} con instrucciones para activar su cuenta.`);
   } else {
-    showToast(`Usuario invitado. Pídele que use "¿Olvidaste tu contraseña?" en el login con ${email} para establecer su propia contraseña.`);
+    showToast(`Se ${resultado.cuentaYaExistia ? 'actualizó' : 'creó'} la cuenta de ${nombre}, pero no pudimos enviarle el correo automático${resultado.emailError ? ' ('+resultado.emailError+')' : ''}. Pídele que use "¿Olvidaste tu contraseña?" en el login con ${email} mientras lo revisamos.`, false);
   }
   closeModal('modal-invitar-usuario');
   renderUsuarios();
