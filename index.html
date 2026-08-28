@@ -2374,14 +2374,59 @@ async function renderUsuarios(){
       ? 'Acceso completo'
       : (modulos&&modulos.length ? `${modulos.length} módulo${modulos.length>1?'s':''}` : 'Por configurar');
     const medVinc = u.rol==='odontologo' ? (getMed(u.medico_id)?.nombre || '<span style="color:var(--red)">Sin vincular</span>') : '';
+    const puedeGestionar = u.rol!=='admin_sistema' && u.id!==USER_ID;
     return`<tr>
       <td><strong>${u.nombre||'—'}</strong>${medVinc?`<div style="font-size:11px;color:var(--muted)">Médico: ${medVinc}</div>`:''}</td>
       <td style="font-size:12px">${u.email||'—'}</td>
       <td><span class="badge ${u.rol==='admin_clinica'?'bp':u.rol==='odontologo'?'bt':'bgr'}">${rolLabel[u.rol]||u.rol}</span></td>
       <td style="font-size:12px">${resumen}</td>
-      <td>${u.rol!=='admin_sistema'&&u.id!==USER_ID?`<button class="btn btn-ghost btn-sm" onclick="abrirPermisosUsuario('${u.id}')">Editar</button>`:'<span style="font-size:11px;color:var(--muted)">—</span>'}</td>
+      <td>${puedeGestionar?`
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="abrirPermisosUsuario('${u.id}')">Editar</button>
+            <button class="btn btn-ghost btn-sm" onclick="reenviarAccesoUsuario('${u.id}')">✉ Reenviar acceso</button>
+          </div>`:'<span style="font-size:11px;color:var(--muted)">—</span>'}</td>
     </tr>`;
   }).join('');
+}
+
+async function reenviarAccesoUsuario(userId){
+  const u=_usuarios.find(x=>x.id===userId);
+  if(!u)return;
+  if(!confirm(`¿Reenviar el correo de acceso a ${u.nombre||u.email} (${u.email})?`))return;
+
+  const { data: { session: adminSession } } = await sb.auth.getSession();
+  if(!adminSession){ showToast('Tu sesión expiró, vuelve a iniciar sesión',false); return; }
+
+  let resultado;
+  try{
+    const resp = await fetch(`${SB_URL}/functions/v1/invitar-usuario`, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+adminSession.access_token,
+        'apikey': SB_KEY,
+      },
+      body: JSON.stringify({
+        nombre: u.nombre,
+        email: u.email,
+        rol: u.rol,
+        medico_id: u.medico_id||null,
+        consultorios_ids: u.consultorios_ids||[],
+        permisos: u.permisos||{},
+      }),
+    });
+    resultado = await resp.json();
+    if(!resp.ok){
+      throw new Error(resultado?.error || 'Error desconocido');
+    }
+  }catch(err){
+    showToast('Error al reenviar acceso: '+err.message,false);
+    return;
+  }
+
+  showToast(resultado.emailEnviado
+    ? `✅ Correo reenviado a ${u.email}.`
+    : `No se pudo reenviar el correo${resultado.emailError ? ' ('+resultado.emailError+')' : ''}.`, !!resultado.emailEnviado);
 }
 
 function toggleCamposRolPermisos(){
