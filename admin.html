@@ -84,6 +84,7 @@
   .badge-purple { background: #EDE9FA; color: var(--accent); }
   .badge-teal  { background: #E5F7F7; color: #1A7A7A; }
   .badge-gray  { background: #F0EEF8; color: var(--muted); }
+  .badge-yellow { background: #FFF6DE; color: #9A6B00; }
 
   /* FORMS */
   .form-group { margin-bottom: 16px; }
@@ -232,9 +233,9 @@
       </div>
       <div class="card">
         <table>
-          <thead><tr><th>Nombre</th><th>RFC</th><th>Plan</th><th>Responsable</th><th>Creada</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Nombre</th><th>RFC</th><th>Plan</th><th>Responsable</th><th>Acceso</th><th>Pacientes</th><th>Creada</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody id="clinicas-tbl">
-            <tr><td colspan="7"><div class="empty">Cargando...</div></td></tr>
+            <tr><td colspan="9"><div class="empty">Cargando...</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -514,12 +515,17 @@ async function loadDashboard() {
   const [{ data: clinicas }, { data: usuarios }, { data: pacientes }] = await Promise.all([
     sb.from('clinicas').select('*').eq('activa', true),
     sb.from('perfiles').select('*'),
-    sb.from('pacientes').select('id'),
+    sb.from('pacientes').select('clinica_id'), // solo el id de clínica, ningún dato confidencial del paciente
   ]);
 
   document.getElementById('stat-clinicas').textContent  = clinicas?.length ?? 0;
   document.getElementById('stat-usuarios').textContent  = usuarios?.length ?? 0;
   document.getElementById('stat-pacientes').textContent = pacientes?.length ?? 0;
+
+  const pacientesPorClinica = {};
+  (pacientes || []).forEach(p => {
+    pacientesPorClinica[p.clinica_id] = (pacientesPorClinica[p.clinica_id] || 0) + 1;
+  });
 
   const mrr = (clinicas || []).reduce((s, c) => {
     if (c.plan === 'basico') return s + 399;
@@ -530,11 +536,12 @@ async function loadDashboard() {
 
   document.getElementById('dashboard-clinicas-tbl').innerHTML = (clinicas || []).map(c => {
     const uCount = (usuarios || []).filter(u => u.clinica_id === c.id).length;
+    const pCount = pacientesPorClinica[c.id] || 0;
     return `<tr>
       <td><strong>${c.nombre}</strong></td>
       <td><span class="badge badge-${c.plan === 'basico' ? 'teal' : 'purple'} plan-${c.plan}">${c.plan.toUpperCase()}</span></td>
       <td>${uCount} / ${c.max_usuarios}</td>
-      <td>— / ${c.max_pacientes}</td>
+      <td>${pCount} / ${c.max_pacientes}</td>
       <td><span class="badge badge-green">Activa</span></td>
     </tr>`;
   }).join('') || `<tr><td colspan="5"><div class="empty">Sin clínicas registradas aún</div></td></tr>`;
@@ -543,23 +550,64 @@ async function loadDashboard() {
 let _clinicas = [];
 let _adminsClinica = [];
 async function loadClinicas() {
-  const [{ data: clinicasData }, { data: adminsData }] = await Promise.all([
+  const [{ data: clinicasData }, { data: adminsData }, { data: pacientesData }] = await Promise.all([
     sb.from('clinicas').select('*').order('creado_en', { ascending: false }),
     sb.from('perfiles').select('id, clinica_id, nombre, email, activo').eq('rol', 'admin_clinica'),
+    sb.from('pacientes').select('clinica_id'), // solo el id de clínica, ningún dato confidencial del paciente
   ]);
   _clinicas = clinicasData || [];
   _adminsClinica = adminsData || [];
+
+  // Conteo de pacientes por clínica (sin exponer info del paciente)
+  const pacientesPorClinica = {};
+  (pacientesData || []).forEach(p => {
+    pacientesPorClinica[p.clinica_id] = (pacientesPorClinica[p.clinica_id] || 0) + 1;
+  });
+  _pacientesPorClinica = pacientesPorClinica;
+
+  // Estado de acceso (¿el admin de la clínica ya inició sesión?) — solo Super Admin puede verlo
+  let estadosAcceso = {};
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/gestionar-usuario`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+        'apikey': SUPABASE_ANON,
+      },
+      body: JSON.stringify({ action: 'estado_accesos' }),
+    });
+    const result = await resp.json();
+    if (resp.ok && result.estados) estadosAcceso = result.estados;
+  } catch (e) {
+    console.error('No se pudo obtener el estado de accesos:', e);
+  }
+
   document.getElementById('clinicas-tbl').innerHTML = _clinicas.map(c => {
     const admin = _adminsClinica.find(a => a.clinica_id === c.id);
     const accesoBtn = admin
       ? `<button class="btn btn-ghost btn-sm" onclick="enviarAccesoClinica('${c.id}', true)">🔑 Reenviar acceso</button>`
       : `<button class="btn btn-primary btn-sm" onclick="enviarAccesoClinica('${c.id}', false)">✉ Invitar admin</button>`;
+
+    let accesoBadge = '<span class="badge badge-gray">Sin admin</span>';
+    if (admin) {
+      const yaEntro = !!estadosAcceso[admin.id];
+      accesoBadge = yaEntro
+        ? '<span class="badge badge-green">Activado</span>'
+        : '<span class="badge badge-yellow">Pendiente</span>';
+    }
+
+    const numPacientes = pacientesPorClinica[c.id] || 0;
+
     return `
     <tr>
       <td><strong>${c.nombre}</strong><br><small style="color:var(--muted)">${c.email || ''}</small></td>
       <td style="font-size:12px">${c.rfc || '—'}</td>
       <td><span class="badge badge-${c.plan === 'basico' ? 'teal' : 'purple'} plan-${c.plan}">${c.plan.toUpperCase()}</span></td>
       <td>${c.responsable || '—'}</td>
+      <td>${accesoBadge}</td>
+      <td>${numPacientes} / ${c.max_pacientes}</td>
       <td style="font-size:12px">${new Date(c.creado_en).toLocaleDateString('es-MX')}</td>
       <td><span class="badge badge-${c.activa ? 'green' : 'red'}">${c.activa ? 'Activa' : 'Inactiva'}</span></td>
       <td style="white-space:nowrap">
@@ -573,7 +621,7 @@ async function loadClinicas() {
         </div>
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏥</div>Sin clínicas registradas</div></td></tr>`;
+  }).join('') || `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🏥</div>Sin clínicas registradas</div></td></tr>`;
 }
 
 async function enviarAccesoClinica(clinicaId, esReenvio) {
